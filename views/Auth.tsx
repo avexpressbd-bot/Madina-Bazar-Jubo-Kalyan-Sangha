@@ -11,28 +11,29 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  // এখানে আপনি আপনার পছন্দমতো ইমেইল এবং পাসওয়ার্ড পরিবর্তন করতে পারেন
-  const ADMIN_EMAIL = 'admin@mbjks.org';
+  // ---------------------------------------------------------
+  // এই ইমেইল এবং পাসওয়ার্ডটি আপনি আপনার গিটহাবে পুশ করার আগে আপনার মতো করে বদলে দিন।
+  // ডোমেইন হোস্ট করার পর এই তথ্য দিয়েই আপনাকে লগইন করতে হবে।
+  // ---------------------------------------------------------
+  const ADMIN_EMAIL = 'admin@mbjks.org'; 
   const ADMIN_PASSWORD = 'admin123';
+  // ---------------------------------------------------------
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (isLoginView) {
-      // এডমিন চেক
       if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
         onLogin('admin');
       } 
-      // সাধারণ ইউজার চেক (আপাতত যেকোনো ইমেইল পাসওয়ার্ড গ্রহণ করা হচ্ছে)
       else if (email && password.length >= 6) {
         onLogin('user');
       } 
       else {
-        setError('ভুল ইমেইল অথবা পাসওয়ার্ড! (এডমিন ইমেইল: admin@mbjks.org, পাসওয়ার্ড: admin123)');
+        setError('ভুল ইমেইল অথবা পাসওয়ার্ড! পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে।');
       }
     } else {
-      // রেজিস্ট্রেশন লজিক (সিমুলেশন)
       alert('রেজিস্ট্রেশন সফল হয়েছে! এখন লগইন করুন।');
       setIsLoginView(true);
     }

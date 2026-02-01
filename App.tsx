@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './views/Home';
@@ -19,35 +19,51 @@ const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Editable States
-  const [members, setMembers] = useState<Member[]>([
-    { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সাধারণ মেম্বার', image: 'https://picsum.photos/seed/p1/200/200' },
-  ]);
+  // Helper to load from localStorage
+  const loadState = (key: string, defaultValue: any) => {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : defaultValue;
+  };
 
-  const [committee, setCommittee] = useState<Member[]>([
+  // States with Persistence
+  const [members, setMembers] = useState<Member[]>(() => loadState('mbjks_members', [
+    { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সাধারণ মেম্বার', image: 'https://picsum.photos/seed/p1/200/200' },
+  ]));
+
+  const [committee, setCommittee] = useState<Member[]>(() => loadState('mbjks_committee', [
     { id: 'c1', name: 'মোঃ করিম উদ্দিন', role: 'সভাপতি', phone: '01711223344', image: 'https://picsum.photos/seed/c1/300/300' },
     { id: 'c2', name: 'আব্দুল হামিদ', role: 'সাধারণ সম্পাদক', phone: '01811223344', image: 'https://picsum.photos/seed/c2/300/300' },
-  ]);
+  ]));
 
-  const [notices, setNotices] = useState<Notice[]>([
+  const [notices, setNotices] = useState<Notice[]>(() => loadState('mbjks_notices', [
     { id: '1', title: 'বার্ষিক সাধারণ সভা ২০২৪', description: 'আগামী শুক্রবার ক্লাবের সভা কক্ষে বার্ষিক সাধারণ সভা অনুষ্ঠিত হবে।', date: '২০২৪-০৫-২০', videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
-  ]);
+  ]));
 
-  const [gallery, setGallery] = useState<GalleryImage[]>([
+  const [gallery, setGallery] = useState<GalleryImage[]>(() => loadState('mbjks_gallery', [
     { id: 'g1', url: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800', caption: 'ফুটবল টুর্নামেন্ট ২০২৩' },
     { id: 'g2', url: 'https://images.unsplash.com/photo-1526676037777-05a232554f77?w=800', caption: 'ত্রাণ বিতরণ কর্মসূচি' },
-  ]);
+  ]));
 
-  const [cricketStats, setCricketStats] = useState<TournamentStats>({
+  const [cricketStats, setCricketStats] = useState<TournamentStats>(() => loadState('mbjks_cricketStats', {
     year: '২০২৩',
     winner: 'মদিনা বাজার রাইডার্স',
     runnerUp: 'সেবা সংঘ স্পার্টানস',
     topScorer: { name: 'সাব্বির আহমেদ', runs: 342, image: 'https://picsum.photos/seed/cs1/200/200' },
     topWicketTaker: { name: 'মিজানুর রহমান', wickets: 14, image: 'https://picsum.photos/seed/cs2/200/200' },
     participatingTeams: ['রাইডার্স', 'স্পার্টানস', 'টাইটানস', 'ওয়ারিয়র্স']
-  });
+  }));
 
-  const [upcomingTeams, setUpcomingTeams] = useState<Team[]>([]);
+  const [upcomingTeams, setUpcomingTeams] = useState<Team[]>(() => loadState('mbjks_upcomingTeams', []));
+
+  // Save to localStorage whenever states change
+  useEffect(() => {
+    localStorage.setItem('mbjks_members', JSON.stringify(members));
+    localStorage.setItem('mbjks_committee', JSON.stringify(committee));
+    localStorage.setItem('mbjks_notices', JSON.stringify(notices));
+    localStorage.setItem('mbjks_gallery', JSON.stringify(gallery));
+    localStorage.setItem('mbjks_cricketStats', JSON.stringify(cricketStats));
+    localStorage.setItem('mbjks_upcomingTeams', JSON.stringify(upcomingTeams));
+  }, [members, committee, notices, gallery, cricketStats, upcomingTeams]);
 
   const handleLogin = (role: 'user' | 'admin') => {
     setIsLoggedIn(true);
