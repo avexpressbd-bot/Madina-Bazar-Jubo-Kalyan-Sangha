@@ -1,0 +1,96 @@
+
+import React, { useState } from 'react';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import Home from './views/Home';
+import About from './views/About';
+import Members from './views/Members';
+import Committee from './views/Committee';
+import Gallery from './views/Gallery';
+import NoticeBoard from './views/NoticeBoard';
+import Contact from './views/Contact';
+import CricketHub from './views/CricketHub';
+import Auth from './views/Auth';
+import AdminDashboard from './views/AdminDashboard';
+import { View, Member, Notice, TournamentStats, Team, GalleryImage } from './types';
+
+const App: React.FC = () => {
+  const [currentView, setCurrentView] = useState<View>('home');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Editable States
+  const [members, setMembers] = useState<Member[]>([
+    { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সাধারণ মেম্বার', image: 'https://picsum.photos/seed/p1/200/200' },
+  ]);
+
+  const [committee, setCommittee] = useState<Member[]>([
+    { id: 'c1', name: 'মোঃ করিম উদ্দিন', role: 'সভাপতি', phone: '01711223344', image: 'https://picsum.photos/seed/c1/300/300' },
+    { id: 'c2', name: 'আব্দুল হামিদ', role: 'সাধারণ সম্পাদক', phone: '01811223344', image: 'https://picsum.photos/seed/c2/300/300' },
+  ]);
+
+  const [notices, setNotices] = useState<Notice[]>([
+    { id: '1', title: 'বার্ষিক সাধারণ সভা ২০২৪', description: 'আগামী শুক্রবার ক্লাবের সভা কক্ষে বার্ষিক সাধারণ সভা অনুষ্ঠিত হবে।', date: '২০২৪-০৫-২০', videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
+  ]);
+
+  const [gallery, setGallery] = useState<GalleryImage[]>([
+    { id: 'g1', url: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800', caption: 'ফুটবল টুর্নামেন্ট ২০২৩' },
+    { id: 'g2', url: 'https://images.unsplash.com/photo-1526676037777-05a232554f77?w=800', caption: 'ত্রাণ বিতরণ কর্মসূচি' },
+  ]);
+
+  const [cricketStats, setCricketStats] = useState<TournamentStats>({
+    year: '২০২৩',
+    winner: 'মদিনা বাজার রাইডার্স',
+    runnerUp: 'সেবা সংঘ স্পার্টানস',
+    topScorer: { name: 'সাব্বির আহমেদ', runs: 342, image: 'https://picsum.photos/seed/cs1/200/200' },
+    topWicketTaker: { name: 'মিজানুর রহমান', wickets: 14, image: 'https://picsum.photos/seed/cs2/200/200' },
+    participatingTeams: ['রাইডার্স', 'স্পার্টানস', 'টাইটানস', 'ওয়ারিয়র্স']
+  });
+
+  const [upcomingTeams, setUpcomingTeams] = useState<Team[]>([]);
+
+  const handleLogin = (role: 'user' | 'admin') => {
+    setIsLoggedIn(true);
+    setIsAdmin(role === 'admin');
+    setCurrentView('home');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setIsAdmin(false);
+    setCurrentView('home');
+  };
+
+  const renderView = () => {
+    switch (currentView) {
+      case 'home': return <Home setView={setCurrentView} />;
+      case 'about': return <About />;
+      case 'members': return <Members members={members} />;
+      case 'committee': return <Committee members={committee} />;
+      case 'gallery': return <Gallery images={gallery} />;
+      case 'notice': return <NoticeBoard notices={notices} />;
+      case 'contact': return <Contact />;
+      case 'cricket': return <CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} />;
+      case 'auth': return <Auth onLogin={handleLogin} />;
+      case 'admin': return <AdminDashboard 
+        members={members} setMembers={setMembers} 
+        committee={committee} setCommittee={setCommittee}
+        notices={notices} setNotices={setNotices}
+        gallery={gallery} setGallery={setGallery}
+        upcomingTeams={upcomingTeams} setUpcomingTeams={setUpcomingTeams}
+        cricketStats={cricketStats} setCricketStats={setCricketStats}
+      />;
+      default: return <Home setView={setCurrentView} />;
+    }
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar currentView={currentView} setView={setCurrentView} isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} />
+      <main className="flex-grow pt-20">{renderView()}</main>
+      <Footer setView={setCurrentView} />
+    </div>
+  );
+};
+
+export default App;
