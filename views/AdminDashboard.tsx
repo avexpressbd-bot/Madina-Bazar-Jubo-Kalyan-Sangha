@@ -30,7 +30,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   upcomingTeams, setUpcomingTeams, cricketStats, setCricketStats, users, setUsers,
   posts, setPosts, footerData, setFooterData, aboutData, setAboutData
 }) => {
-  const [activeTab, setActiveTab] = useState<'feed' | 'notices' | 'people' | 'gallery' | 'cricket' | 'site_settings'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'notices' | 'people' | 'gallery' | 'cricket' | 'site_settings' | 'requests'>('feed');
 
   // Local states for forms
   const [newPost, setNewPost] = useState({ content: '', mediaUrl: '', mediaType: 'none' as any });
@@ -79,7 +79,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       image: p.image,
       type: type
     });
-    // Scroll to top of form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -92,10 +91,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if(!newPerson.name) return alert('নাম আবশ্যক');
 
     if (editingPersonId) {
-      // Update Logic
       const updatedPerson = { ...newPerson, id: editingPersonId };
       if (newPerson.type === 'member') {
-        // If type changed from committee to member or vice-versa
         setCommittee(committee.filter(c => c.id !== editingPersonId));
         setMembers(members.map(m => m.id === editingPersonId ? updatedPerson : m));
         if (!members.find(m => m.id === editingPersonId)) {
@@ -110,14 +107,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       }
       alert('তথ্য আপডেট করা হয়েছে');
     } else {
-      // Add Logic
       const p = { ...newPerson, id: Date.now().toString() };
       if(newPerson.type === 'member') setMembers([...members, p]);
       else setCommittee([...committee, p]);
       alert('সফলভাবে যোগ করা হয়েছে');
     }
-    
     cancelPersonEdit();
+  };
+
+  // User Management
+  const pendingUsers = users.filter(u => u.status === 'pending');
+
+  const handleApproveUser = (userId: string) => {
+    setUsers(users.map(u => u.id === userId ? { ...u, status: 'approved' } : u));
+    alert('মেম্বার অনুমোদিত হয়েছে!');
+  };
+
+  const handleRejectUser = (userId: string) => {
+    if (window.confirm('আপনি কি নিশ্চিত যে এই আবেদনটি বাতিল করতে চান?')) {
+      setUsers(users.filter(u => u.id !== userId));
+    }
   };
 
   return (
@@ -126,6 +135,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="bg-slate-900 px-6 py-4 flex flex-wrap gap-2 justify-center lg:justify-start">
           {[
             { id: 'feed', label: 'পোস্ট ফিড', icon: 'fa-rss' },
+            { id: 'requests', label: `আবেদনসমূহ (${pendingUsers.length})`, icon: 'fa-user-clock' },
             { id: 'notices', label: 'নোটিশ বোর্ড', icon: 'fa-bullhorn' },
             { id: 'people', label: 'মেম্বার ও কমিটি', icon: 'fa-users' },
             { id: 'gallery', label: 'গ্যালারি', icon: 'fa-images' },
@@ -135,14 +145,78 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === tab.id ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-400/50' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
             >
               <i className={`fas ${tab.icon}`}></i> {tab.label}
+              {tab.id === 'requests' && pendingUsers.length > 0 && (
+                <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+              )}
             </button>
           ))}
         </div>
 
         <div className="p-8 lg:p-12">
+          {/* MEMBER REQUESTS */}
+          {activeTab === 'requests' && (
+            <div className="space-y-8">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-slate-800">নতুন মেম্বার আবেদনসমূহ</h3>
+                <span className="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest">
+                  মোট {pendingUsers.length} টি আবেদন
+                </span>
+              </div>
+
+              {pendingUsers.length === 0 ? (
+                <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-20 text-center">
+                  <i className="fas fa-check-circle text-5xl text-green-200 mb-6"></i>
+                  <p className="text-slate-400 font-bold text-lg">বর্তমানে কোনো পেন্ডিং আবেদন নেই।</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {pendingUsers.map(user => (
+                    <div key={user.id} className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all group">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
+                            <i className="fas fa-user-circle text-3xl"></i>
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-slate-800 text-lg">{user.name}</h4>
+                            <p className="text-xs text-slate-400 font-medium">{user.email}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-3 mb-6 bg-slate-50 p-4 rounded-2xl">
+                        <div className="flex items-center text-sm">
+                          <i className="fas fa-phone-alt w-6 text-slate-300"></i>
+                          <span className="text-slate-600 font-medium">{user.phone}</span>
+                        </div>
+                        <div className="flex items-center text-sm">
+                          <i className="fas fa-calendar-alt w-6 text-slate-300"></i>
+                          <span className="text-slate-400 text-xs">আবেদনের তারিখ: {new Date().toLocaleDateString('bn-BD')}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button 
+                          onClick={() => handleApproveUser(user.id)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                        >
+                          <i className="fas fa-check"></i> অনুমোদন করুন
+                        </button>
+                        <button 
+                          onClick={() => handleRejectUser(user.id)}
+                          className="bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-500 font-bold py-3 rounded-xl transition-all"
+                        >
+                          বাতিল
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* FEED MANAGEMENT */}
           {activeTab === 'feed' && (
             <div className="space-y-10">

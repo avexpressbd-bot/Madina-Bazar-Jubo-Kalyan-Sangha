@@ -32,17 +32,19 @@ const Auth: React.FC<AuthProps> = ({ onLogin, setUsers }) => {
         return;
       }
 
-      const savedUsers = JSON.parse(localStorage.getItem('mbjks_users') || '[]');
-      const foundUser = savedUsers.find((u: User) => u.email === formData.email && u.password === formData.password);
+      const savedUsers: User[] = JSON.parse(localStorage.getItem('mbjks_users') || '[]');
+      const foundUser = savedUsers.find((u) => u.email === formData.email && u.password === formData.password);
       
       if (!foundUser) {
         setError('ভুল ইমেইল অথবা পাসওয়ার্ড!');
+      } else if (foundUser.status === 'pending') {
+        setError('আপনার একাউন্টটি এখনও অনুমোদিত হয়নি। দয়া করে এডমিনের অনুমোদনের জন্য অপেক্ষা করুন।');
       } else {
         onLogin(foundUser.role);
       }
     } else {
-      const savedUsers = JSON.parse(localStorage.getItem('mbjks_users') || '[]');
-      if (savedUsers.some((u: User) => u.email === formData.email)) {
+      const savedUsers: User[] = JSON.parse(localStorage.getItem('mbjks_users') || '[]');
+      if (savedUsers.some((u) => u.email === formData.email)) {
         setError('এই ইমেইল দিয়ে ইতিপূর্বেই একাউন্ট খোলা হয়েছে।');
         return;
       }
@@ -53,17 +55,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin, setUsers }) => {
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
-        status: 'approved', // Instant access
+        status: 'pending', // Registration now starts as pending
         role: 'user'
       };
 
       setUsers(prevUsers => [...prevUsers, newUser]);
       
-      setSuccess('রেজিস্ট্রেশন সফল হয়েছে! এখন আপনি লগইন করতে পারবেন।');
+      setSuccess('আপনার রেজিস্ট্রেশন আবেদন সফলভাবে জমা হয়েছে! এডমিন অনুমোদন করার পর আপনি লগইন করতে পারবেন।');
       setTimeout(() => {
         setIsLoginView(true);
         setFormData({ name: '', email: formData.email, phone: '', password: '' });
-      }, 1500);
+      }, 3500);
     }
   };
 
@@ -80,26 +82,46 @@ const Auth: React.FC<AuthProps> = ({ onLogin, setUsers }) => {
         </div>
         
         <form className="p-8 space-y-5" onSubmit={handleSubmit}>
-          {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-bold flex items-center"><i className="fas fa-exclamation-circle mr-2"></i>{error}</div>}
-          {success && <div className="bg-green-50 text-green-600 p-3 rounded-xl text-xs font-bold flex items-center"><i className="fas fa-check-circle mr-2"></i>{success}</div>}
+          {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold flex items-start animate-pulse">
+            <i className="fas fa-exclamation-circle mr-2 mt-0.5"></i>
+            <span>{error}</span>
+          </div>}
+          
+          {success && <div className="bg-green-50 text-green-600 p-4 rounded-xl text-xs font-bold flex items-start">
+            <i className="fas fa-check-circle mr-2 mt-0.5"></i>
+            <span>{success}</span>
+          </div>}
 
           {!isLoginView && (
             <>
-              <input type="text" name="name" required value={formData.name} onChange={handleChange} placeholder="আপনার নাম" className="w-full px-4 py-3 rounded-xl border focus:border-blue-500 outline-none" />
-              <input type="text" name="phone" required value={formData.phone} onChange={handleChange} placeholder="মোবাইল নম্বর" className="w-full px-4 py-3 rounded-xl border focus:border-blue-500 outline-none" />
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">পূর্ণ নাম</label>
+                <input type="text" name="name" required value={formData.name} onChange={handleChange} placeholder="আপনার নাম" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none transition-all" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">মোবাইল নম্বর</label>
+                <input type="text" name="phone" required value={formData.phone} onChange={handleChange} placeholder="০১৭০০-০০০০০০" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none transition-all" />
+              </div>
             </>
           )}
 
-          <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="ইমেইল ঠিকানা" className="w-full px-4 py-3 rounded-xl border focus:border-blue-500 outline-none" />
-          <input type="password" name="password" required value={formData.password} onChange={handleChange} placeholder="পাসওয়ার্ড" className="w-full px-4 py-3 rounded-xl border focus:border-blue-500 outline-none" />
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">ইমেইল ঠিকানা</label>
+            <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="example@mail.com" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none transition-all" />
+          </div>
+          
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">পাসওয়ার্ড</label>
+            <input type="password" name="password" required value={formData.password} onChange={handleChange} placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none transition-all" />
+          </div>
 
-          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all">
-            {isLoginView ? 'লগইন করুন' : 'নিবন্ধন করুন'}
+          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform active:scale-95">
+            {isLoginView ? 'লগইন করুন' : 'আবেদন জমা দিন'}
           </button>
 
           <div className="text-center pt-2">
             <button type="button" onClick={() => { setIsLoginView(!isLoginView); setError(''); setSuccess(''); }} className="text-blue-600 font-bold hover:underline text-sm">
-              {isLoginView ? 'নতুন একাউন্ট খুলতে চান? এখানে ক্লিক করুন' : 'ইতিমধ্যেই একাউন্ট আছে? লগইন করুন'}
+              {isLoginView ? 'নতুন মেম্বার হতে চান? এখানে আবেদন করুন' : 'ইতিমধ্যেই একাউন্ট আছে? লগইন করুন'}
             </button>
           </div>
         </form>
