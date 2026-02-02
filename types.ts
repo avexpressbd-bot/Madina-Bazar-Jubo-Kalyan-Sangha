@@ -34,6 +34,17 @@ export interface Post {
   likes: number;
 }
 
+export interface FooterData {
+  heroImageUrl: string;
+  description: string;
+  address: string;
+  phone: string;
+  email: string;
+  facebook: string;
+  youtube: string;
+  instagram: string;
+}
+
 export interface Team {
   id: string;
   name: string;

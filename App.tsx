@@ -12,7 +12,7 @@ import Contact from './views/Contact';
 import CricketHub from './views/CricketHub';
 import Auth from './views/Auth';
 import AdminDashboard from './views/AdminDashboard';
-import { View, Member, Notice, TournamentStats, Team, GalleryImage, User, Post } from './types';
+import { View, Member, Notice, TournamentStats, Team, GalleryImage, User, Post, FooterData } from './types';
 
 const App: React.FC = () => {
   const loadState = (key: string, defaultValue: any) => {
@@ -29,6 +29,17 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(() => loadState('mbjks_isAdmin', false));
   const [users, setUsers] = useState<User[]>(() => loadState('mbjks_users', []));
   const [posts, setPosts] = useState<Post[]>(() => loadState('mbjks_posts', []));
+
+  const [footerData, setFooterData] = useState<FooterData>(() => loadState('mbjks_footer', {
+    heroImageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=2000',
+    description: 'একটি সামাজিক সংগঠন যা যুবদের উন্নয়ন ও সমাজসেবায় নিবেদিত। আমরা শিক্ষা, ক্রীড়া ও সমাজসেবামূলক কর্মকাণ্ডের মাধ্যমে আমাদের এলাকাকে সমৃদ্ধ করতে চাই।',
+    address: 'মদিনা বাজার, সিলেট, বাংলাদেশ',
+    phone: '+৮৮০ ১৭০০ ০০০০০০',
+    email: 'info@mbjks.org',
+    facebook: '#',
+    youtube: '#',
+    instagram: '#'
+  }));
 
   const [members, setMembers] = useState<Member[]>(() => loadState('mbjks_members', [
     { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সাধারণ মেম্বার', image: 'https://picsum.photos/seed/p1/200/200' },
@@ -68,7 +79,8 @@ const App: React.FC = () => {
     localStorage.setItem('mbjks_gallery', JSON.stringify(gallery));
     localStorage.setItem('mbjks_cricketStats', JSON.stringify(cricketStats));
     localStorage.setItem('mbjks_upcomingTeams', JSON.stringify(upcomingTeams));
-  }, [currentView, isLoggedIn, isAdmin, users, posts, members, committee, notices, gallery, cricketStats, upcomingTeams]);
+    localStorage.setItem('mbjks_footer', JSON.stringify(footerData));
+  }, [currentView, isLoggedIn, isAdmin, users, posts, members, committee, notices, gallery, cricketStats, upcomingTeams, footerData]);
 
   const handleLogin = (role: 'user' | 'admin') => {
     setIsLoggedIn(true);
@@ -84,13 +96,13 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case 'home': return <Home setView={setCurrentView} posts={posts} />;
+      case 'home': return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} />;
       case 'about': return <About />;
       case 'members': return <Members members={members} />;
       case 'committee': return <Committee members={committee} />;
       case 'gallery': return <Gallery images={gallery} />;
       case 'notice': return <NoticeBoard notices={notices} />;
-      case 'contact': return <Contact />;
+      case 'contact': return <Contact footerData={footerData} />;
       case 'cricket': return <CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} />;
       case 'auth': return <Auth onLogin={handleLogin} users={users} setUsers={setUsers} />;
       case 'admin': 
@@ -107,8 +119,9 @@ const App: React.FC = () => {
           cricketStats={cricketStats} setCricketStats={setCricketStats}
           users={users} setUsers={setUsers}
           posts={posts} setPosts={setPosts}
+          footerData={footerData} setFooterData={setFooterData}
         />;
-      default: return <Home setView={setCurrentView} posts={posts} />;
+      default: return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} />;
     }
   };
 
@@ -116,7 +129,7 @@ const App: React.FC = () => {
     <div className="flex flex-col min-h-screen">
       <Navbar currentView={currentView} setView={setCurrentView} isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} />
       <main className="flex-grow pt-20">{renderView()}</main>
-      <Footer setView={setCurrentView} />
+      <Footer setView={setCurrentView} footerData={footerData} />
     </div>
   );
 };

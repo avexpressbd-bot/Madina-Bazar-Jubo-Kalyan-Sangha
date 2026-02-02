@@ -1,7 +1,8 @@
 
 import React from 'react';
+import { FooterData } from '../types';
 
-const Contact: React.FC = () => {
+const Contact: React.FC<{ footerData: FooterData }> = ({ footerData }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12 animate-fadeIn">
       <div className="text-center mb-16">
@@ -30,7 +31,7 @@ const Contact: React.FC = () => {
               <label className="block text-sm font-bold text-slate-700 mb-2">আপনার বার্তা</label>
               <textarea rows={4} className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-100" placeholder="আপনার কথাগুলো এখানে লিখুন..."></textarea>
             </div>
-            <button className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition-colors">বার্তা পাঠান</button>
+            <button type="button" onClick={() => alert('বার্তা গ্রহণ করা হয়েছে। শীঘ্রই যোগাযোগ করা হবে।')} className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition-colors">বার্তা পাঠান</button>
           </form>
         </div>
 
@@ -40,21 +41,20 @@ const Contact: React.FC = () => {
             <div className="space-y-6">
               <div className="flex items-start">
                 <i className="fas fa-map-marker-alt mt-1 mr-4 text-xl opacity-70"></i>
-                <p>মদিনা বাজার মেইন রোড, সিলেট সদর, সিলেট, বাংলাদেশ।</p>
+                <p>{footerData.address}</p>
               </div>
               <div className="flex items-start">
                 <i className="fas fa-phone mt-1 mr-4 text-xl opacity-70"></i>
-                <p>+৮৮০ ১৭০০ ০০০০০০<br />+৮৮০ ১৮০০ ০০০০০০</p>
+                <p>{footerData.phone}</p>
               </div>
               <div className="flex items-start">
                 <i className="fas fa-envelope mt-1 mr-4 text-xl opacity-70"></i>
-                <p>info@mbjks.org<br />support@mbjks.org</p>
+                <p>{footerData.email}</p>
               </div>
             </div>
           </div>
 
           <div className="h-64 rounded-3xl overflow-hidden shadow-lg border border-slate-200">
-             {/* Mock Map */}
              <div className="w-full h-full bg-slate-200 flex items-center justify-center relative">
                <div className="text-center p-6">
                  <i className="fas fa-map-marked-alt text-4xl text-slate-400 mb-2"></i>

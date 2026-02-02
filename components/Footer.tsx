@@ -1,19 +1,20 @@
 
 import React from 'react';
-import { View } from '../types';
+import { View, FooterData } from '../types';
 
 interface FooterProps {
   setView: (view: View) => void;
+  footerData: FooterData;
 }
 
-const Footer: React.FC<FooterProps> = ({ setView }) => {
+const Footer: React.FC<FooterProps> = ({ setView, footerData }) => {
   return (
     <footer className="bg-slate-900 text-slate-300 py-12 px-4">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
         <div>
           <h3 className="text-white text-xl font-bold mb-4">মদিনা বাজার যুব কল্যাণ সংঘ</h3>
           <p className="text-sm leading-relaxed">
-            একটি সামাজিক সংগঠন যা যুবদের উন্নয়ন ও সমাজসেবায় নিবেদিত। আমরা শিক্ষা, ক্রীড়া ও সমাজসেবামূলক কর্মকাণ্ডের মাধ্যমে আমাদের এলাকাকে সমৃদ্ধ করতে চাই।
+            {footerData.description}
           </p>
         </div>
         <div>
@@ -27,12 +28,13 @@ const Footer: React.FC<FooterProps> = ({ setView }) => {
         </div>
         <div>
           <h3 className="text-white text-xl font-bold mb-4">যোগাযোগ</h3>
-          <p className="mb-2"><i className="fas fa-map-marker-alt mr-2 text-blue-500"></i> মদিনা বাজার, সিলেট, বাংলাদেশ</p>
-          <p className="mb-2"><i className="fas fa-phone mr-2 text-blue-500"></i> +৮৮০ ১৭০০ ০০০০০০</p>
+          <p className="mb-2"><i className="fas fa-map-marker-alt mr-2 text-blue-500"></i> {footerData.address}</p>
+          <p className="mb-2"><i className="fas fa-phone mr-2 text-blue-500"></i> {footerData.phone}</p>
+          <p className="mb-2"><i className="fas fa-envelope mr-2 text-blue-500"></i> {footerData.email}</p>
           <div className="flex justify-center md:justify-start space-x-4 mt-4">
-            <a href="#" className="text-2xl hover:text-white transition-colors"><i className="fab fa-facebook"></i></a>
-            <a href="#" className="text-2xl hover:text-white transition-colors"><i className="fab fa-youtube"></i></a>
-            <a href="#" className="text-2xl hover:text-white transition-colors"><i className="fab fa-instagram"></i></a>
+            <a href={footerData.facebook} target="_blank" rel="noopener noreferrer" className="text-2xl hover:text-white transition-colors"><i className="fab fa-facebook"></i></a>
+            <a href={footerData.youtube} target="_blank" rel="noopener noreferrer" className="text-2xl hover:text-white transition-colors"><i className="fab fa-youtube"></i></a>
+            <a href={footerData.instagram} target="_blank" rel="noopener noreferrer" className="text-2xl hover:text-white transition-colors"><i className="fab fa-instagram"></i></a>
           </div>
         </div>
       </div>

@@ -2,14 +2,14 @@
 import React from 'react';
 import { View, Post } from '../types';
 
-const Home: React.FC<{ setView: (view: View) => void; posts: Post[] }> = ({ setView, posts }) => {
+const Home: React.FC<{ setView: (view: View) => void; posts: Post[]; heroImageUrl: string }> = ({ setView, posts, heroImageUrl }) => {
   return (
     <div className="animate-fadeIn">
       {/* Hero Section */}
       <section className="relative h-[60vh] flex items-center justify-center text-white overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=2000" 
+            src={heroImageUrl} 
             alt="Hero Background" 
             className="w-full h-full object-cover brightness-50"
           />

@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Member, Notice, Team, TournamentStats, GalleryImage, User, Post } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Member, Notice, Team, TournamentStats, GalleryImage, User, Post, FooterData } from '../types';
 
 interface AdminDashboardProps {
   members: Member[];
@@ -19,6 +19,8 @@ interface AdminDashboardProps {
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   posts: Post[];
   setPosts: React.Dispatch<React.SetStateAction<Post[]>>;
+  footerData: FooterData;
+  setFooterData: React.Dispatch<React.SetStateAction<FooterData>>;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
@@ -29,18 +31,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   upcomingTeams, setUpcomingTeams,
   cricketStats, setCricketStats,
   users, setUsers,
-  posts, setPosts
+  posts, setPosts,
+  footerData, setFooterData
 }) => {
-  const [activeTab, setActiveTab] = useState<'members' | 'committee' | 'notices' | 'gallery' | 'posts' | 'requests'>('members');
+  const [activeTab, setActiveTab] = useState<'members' | 'committee' | 'notices' | 'gallery' | 'posts' | 'requests' | 'footer'>('members');
   
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Input states
-  const [input1, setInput1] = useState(''); // Name / Title / Content
-  const [input2, setInput2] = useState(''); // Phone / Description / URL
-  const [input3, setInput3] = useState(''); // Role / Video URL / MediaType
-  const [input4, setInput4] = useState(''); // Image URL
+  const [input1, setInput1] = useState(''); 
+  const [input2, setInput2] = useState(''); 
+  const [input3, setInput3] = useState(''); 
+  const [input4, setInput4] = useState('');
+
+  // Footer Specific States (for easier editing)
+  const [footerHero, setFooterHero] = useState(footerData.heroImageUrl);
+  const [footerDesc, setFooterDesc] = useState(footerData.description);
+  const [footerAddr, setFooterAddr] = useState(footerData.address);
+  const [footerPh, setFooterPh] = useState(footerData.phone);
+  const [footerEm, setFooterEm] = useState(footerData.email);
+  const [footerFb, setFooterFb] = useState(footerData.facebook);
+  const [footerYt, setFooterYt] = useState(footerData.youtube);
+  const [footerInsta, setFooterInsta] = useState(footerData.instagram);
+
+  useEffect(() => {
+    if (activeTab === 'footer') {
+      setFooterHero(footerData.heroImageUrl);
+      setFooterDesc(footerData.description);
+      setFooterAddr(footerData.address);
+      setFooterPh(footerData.phone);
+      setFooterEm(footerData.email);
+      setFooterFb(footerData.facebook);
+      setFooterYt(footerData.youtube);
+      setFooterInsta(footerData.instagram);
+    }
+  }, [activeTab, footerData]);
 
   const resetInputs = () => { 
     setInput1(''); setInput2(''); setInput3(''); setInput4(''); 
@@ -101,6 +127,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     alert('সফলভাবে সংরক্ষিত হয়েছে!');
   };
 
+  const handleFooterSave = () => {
+    setFooterData({
+      heroImageUrl: footerHero,
+      description: footerDesc,
+      address: footerAddr,
+      phone: footerPh,
+      email: footerEm,
+      facebook: footerFb,
+      youtube: footerYt,
+      instagram: footerInsta
+    });
+    alert('সাইট সেটিংস সফলভাবে আপডেট হয়েছে!');
+  };
+
   const pendingRequests = users.filter(u => u.status === 'pending');
 
   return (
@@ -124,6 +164,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {id: 'members', label: 'মেম্বার'},
                 {id: 'committee', label: 'কমিটি'},
                 {id: 'gallery', label: 'গ্যালারি'},
+                {id: 'footer', label: 'সাইট সেটিংস'},
                 {id: 'requests', label: `আবেদন (${pendingRequests.length})`}
               ].map(tab => (
                 <button 
@@ -139,121 +180,176 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {activeTab !== 'requests' && (
-            <div className="lg:col-span-1 bg-slate-50 p-6 rounded-2xl border border-slate-200 h-fit sticky top-24">
-              <h3 className="text-lg font-bold mb-6 text-slate-800 flex items-center">
-                <i className={`fas ${editingId ? 'fa-edit text-orange-500' : 'fa-plus-circle text-blue-600'} mr-2`}></i> 
-                {editingId ? 'তথ্য পরিবর্তন করুন' : 'নতুন তথ্য যোগ করুন'}
-              </h3>
-              
-              <div className="space-y-4">
-                {activeTab === 'posts' ? (
-                  <>
-                    <textarea placeholder="পোস্টের ক্যাপশন/লেখা লিখুন..." className="w-full p-4 rounded-xl border bg-white focus:ring-2 focus:ring-blue-100 outline-none" rows={4} value={input1} onChange={e => setInput1(e.target.value)}></textarea>
-                    <input type="text" placeholder="মিডিয়া লিংঙ্ক (ছবি বা ভিডিও URL)" className="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-100 outline-none" value={input2} onChange={e => setInput2(e.target.value)} />
-                    <select className="w-full p-3 rounded-xl border bg-white outline-none" value={input3} onChange={e => setInput3(e.target.value)}>
-                      <option value="none">কোনো মিডিয়া নেই</option>
-                      <option value="image">ছবি (Image)</option>
-                      <option value="video">ভিডিও (Video)</option>
-                    </select>
-                  </>
-                ) : activeTab === 'notices' ? (
-                  <>
-                    <input type="text" placeholder="নোটিশের শিরোনাম" className="w-full p-3 rounded-xl border bg-white outline-none" value={input1} onChange={e => setInput1(e.target.value)} />
-                    <textarea placeholder="বিস্তারিত বর্ণনা..." className="w-full p-3 rounded-xl border bg-white outline-none" rows={4} value={input2} onChange={e => setInput2(e.target.value)}></textarea>
-                    <input type="text" placeholder="ভিডিও লিংঙ্ক (ঐচ্ছিক)" className="w-full p-3 rounded-xl border bg-white outline-none" value={input3} onChange={e => setInput3(e.target.value)} />
-                  </>
-                ) : activeTab === 'gallery' ? (
-                  <>
-                    <input type="text" placeholder="ছবির ইউআরএল" className="w-full p-3 rounded-xl border bg-white outline-none" value={input1} onChange={e => setInput1(e.target.value)} />
-                    <input type="text" placeholder="ক্যাপশন (ঐচ্ছিক)" className="w-full p-3 rounded-xl border bg-white outline-none" value={input2} onChange={e => setInput2(e.target.value)} />
-                  </>
-                ) : (
-                  <>
-                    <input type="text" placeholder="নাম" className="w-full p-3 rounded-xl border bg-white outline-none" value={input1} onChange={e => setInput1(e.target.value)} />
-                    <input type="text" placeholder="মোবাইল" className="w-full p-3 rounded-xl border bg-white outline-none" value={input2} onChange={e => setInput2(e.target.value)} />
-                    <input type="text" placeholder="পদবী" className="w-full p-3 rounded-xl border bg-white outline-none" value={input3} onChange={e => setInput3(e.target.value)} />
-                    <input type="text" placeholder="ছবির ইউআরএল" className="w-full p-3 rounded-xl border bg-white outline-none" value={input4} onChange={e => setInput4(e.target.value)} />
-                  </>
-                )}
-
-                <div className="flex gap-2">
-                  <button onClick={handleSave} className={`flex-1 ${editingId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-3 rounded-xl transition-all shadow-lg`}>
-                    {editingId ? 'আপডেট করুন' : 'সেভ করুন'}
-                  </button>
-                  {editingId && (
-                    <button onClick={resetInputs} className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-3 rounded-xl font-bold">বাতিল</button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className={`${activeTab === 'requests' ? 'lg:col-span-3' : 'lg:col-span-2'}`}>
-            <h3 className="text-lg font-bold mb-6 text-slate-800 flex justify-between items-center">
-              <span>বিদ্যমান ডাটা লিস্ট</span>
-              <span className="text-sm font-normal text-slate-400">এডিট বা ডিলিট করতে পারেন</span>
-            </h3>
-
-            <div className="space-y-4">
-              {activeTab === 'posts' && posts.map(p => (
-                <div key={p.id} className="bg-white border rounded-2xl p-4 shadow-sm group">
-                  <p className="font-medium line-clamp-2 mb-2">{p.content}</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-slate-400">{p.date}</span>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleEdit('posts', p)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><i className="fas fa-edit"></i></button>
-                      <button onClick={() => { if(confirm('ডিলিট করবেন?')) setPosts(posts.filter(x => x.id !== p.id)) }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><i className="fas fa-trash"></i></button>
+          {activeTab === 'footer' ? (
+            <div className="lg:col-span-3">
+              <div className="bg-slate-50 p-8 rounded-3xl border border-slate-200">
+                <h3 className="text-xl font-bold mb-6 text-slate-800 flex items-center">
+                  <i className="fas fa-cog mr-3 text-blue-600"></i> সাইটের মূল তথ্য ও ছবি পরিবর্তন করুন
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">হোম পেজ হিরো ইমেজ (বড় ছবিটির লিঙ্ক)</label>
+                      <input className="w-full p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-blue-100" value={footerHero} onChange={e => setFooterHero(e.target.value)} placeholder="https://..." />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">সংগঠনের বর্ণনা (Description)</label>
+                      <textarea className="w-full p-4 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-blue-100" rows={4} value={footerDesc} onChange={e => setFooterDesc(e.target.value)}></textarea>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">ঠিকানা</label>
+                      <input className="w-full p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-blue-100" value={footerAddr} onChange={e => setFooterAddr(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">মোবাইল নাম্বার</label>
+                      <input className="w-full p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-blue-100" value={footerPh} onChange={e => setFooterPh(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">ইমেইল ঠিকানা</label>
+                      <input className="w-full p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-blue-100" value={footerEm} onChange={e => setFooterEm(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">ফেসবুক লিঙ্ক</label>
+                      <input className="w-full p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-blue-100" value={footerFb} onChange={e => setFooterFb(e.target.value)} placeholder="https://facebook.com/..." />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">ইউটিউব লিঙ্ক</label>
+                      <input className="w-full p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-blue-100" value={footerYt} onChange={e => setFooterYt(e.target.value)} placeholder="https://youtube.com/..." />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">ইন্সটাগ্রাম লিঙ্ক</label>
+                      <input className="w-full p-3 rounded-xl border bg-white outline-none focus:ring-2 focus:ring-blue-100" value={footerInsta} onChange={e => setFooterInsta(e.target.value)} placeholder="https://instagram.com/..." />
                     </div>
                   </div>
                 </div>
-              ))}
+                <button onClick={handleFooterSave} className="mt-8 w-full md:w-fit bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-12 rounded-2xl shadow-xl transition-all transform hover:scale-105 active:scale-95">
+                   সেটিংস আপডেট করুন
+                </button>
+              </div>
+            </div>
+          ) : activeTab !== 'requests' ? (
+            <>
+              {/* Add/Edit Form */}
+              <div className="lg:col-span-1 bg-slate-50 p-6 rounded-2xl border border-slate-200 h-fit sticky top-24">
+                <h3 className="text-lg font-bold mb-6 text-slate-800 flex items-center">
+                  <i className={`fas ${editingId ? 'fa-edit text-orange-500' : 'fa-plus-circle text-blue-600'} mr-2`}></i> 
+                  {editingId ? 'তথ্য পরিবর্তন করুন' : 'নতুন তথ্য যোগ করুন'}
+                </h3>
+                
+                <div className="space-y-4">
+                  {activeTab === 'posts' ? (
+                    <>
+                      <textarea placeholder="পোস্টের ক্যাপশন/লেখা লিখুন..." className="w-full p-4 rounded-xl border bg-white focus:ring-2 focus:ring-blue-100 outline-none" rows={4} value={input1} onChange={e => setInput1(e.target.value)}></textarea>
+                      <input type="text" placeholder="মিডিয়া লিংঙ্ক (ছবি বা ভিডিও URL)" className="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-100 outline-none" value={input2} onChange={e => setInput2(e.target.value)} />
+                      <select className="w-full p-3 rounded-xl border bg-white outline-none" value={input3} onChange={e => setInput3(e.target.value)}>
+                        <option value="none">কোনো মিডিয়া নেই</option>
+                        <option value="image">ছবি (Image)</option>
+                        <option value="video">ভিডিও (Video)</option>
+                      </select>
+                    </>
+                  ) : activeTab === 'notices' ? (
+                    <>
+                      <input type="text" placeholder="নোটিশের শিরোনাম" className="w-full p-3 rounded-xl border bg-white outline-none" value={input1} onChange={e => setInput1(e.target.value)} />
+                      <textarea placeholder="বিস্তারিত বর্ণনা..." className="w-full p-3 rounded-xl border bg-white outline-none" rows={4} value={input2} onChange={e => setInput2(e.target.value)}></textarea>
+                      <input type="text" placeholder="ভিডিও লিংঙ্ক (ঐচ্ছিক)" className="w-full p-3 rounded-xl border bg-white outline-none" value={input3} onChange={e => setInput3(e.target.value)} />
+                    </>
+                  ) : activeTab === 'gallery' ? (
+                    <>
+                      <input type="text" placeholder="ছবির ইউআরএল" className="w-full p-3 rounded-xl border bg-white outline-none" value={input1} onChange={e => setInput1(e.target.value)} />
+                      <input type="text" placeholder="ক্যাপশন (ঐচ্ছিক)" className="w-full p-3 rounded-xl border bg-white outline-none" value={input2} onChange={e => setInput2(e.target.value)} />
+                    </>
+                  ) : (
+                    <>
+                      <input type="text" placeholder="নাম" className="w-full p-3 rounded-xl border bg-white outline-none" value={input1} onChange={e => setInput1(e.target.value)} />
+                      <input type="text" placeholder="মোবাইল" className="w-full p-3 rounded-xl border bg-white outline-none" value={input2} onChange={e => setInput2(e.target.value)} />
+                      <input type="text" placeholder="পদবী" className="w-full p-3 rounded-xl border bg-white outline-none" value={input3} onChange={e => setInput3(e.target.value)} />
+                      <input type="text" placeholder="ছবির ইউআরএল" className="w-full p-3 rounded-xl border bg-white outline-none" value={input4} onChange={e => setInput4(e.target.value)} />
+                    </>
+                  )}
 
-              {activeTab === 'notices' && notices.map(n => (
-                <div key={n.id} className="bg-white border rounded-2xl p-4 shadow-sm flex justify-between items-center">
-                  <div className="truncate pr-4"><p className="font-bold truncate">{n.title}</p><p className="text-xs text-slate-400">{n.date}</p></div>
-                  <div className="flex gap-2 shrink-0">
-                    <button onClick={() => handleEdit('notices', n)} className="p-2 text-blue-600"><i className="fas fa-edit"></i></button>
-                    <button onClick={() => setNotices(notices.filter(x => x.id !== n.id))} className="p-2 text-red-500"><i className="fas fa-trash"></i></button>
-                  </div>
-                </div>
-              ))}
-
-              {(activeTab === 'members' || activeTab === 'committee') && (activeTab === 'members' ? members : committee).map(m => (
-                <div key={m.id} className="bg-white border rounded-2xl p-4 shadow-sm flex items-center justify-between">
-                  <div className="flex items-center truncate">
-                    <img src={m.image} className="w-10 h-10 rounded-full mr-3 object-cover" />
-                    <div className="truncate"><p className="font-bold truncate">{m.name}</p><p className="text-xs text-slate-400">{m.role}</p></div>
-                  </div>
                   <div className="flex gap-2">
-                    <button onClick={() => handleEdit(activeTab, m)} className="p-2 text-blue-600"><i className="fas fa-edit"></i></button>
-                    <button onClick={() => {
-                      const setter = activeTab === 'members' ? setMembers : setCommittee;
-                      const list = activeTab === 'members' ? members : committee;
-                      setter(list.filter(x => x.id !== m.id));
-                    }} className="p-2 text-red-500"><i className="fas fa-trash"></i></button>
+                    <button onClick={handleSave} className={`flex-1 ${editingId ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-3 rounded-xl transition-all shadow-lg`}>
+                      {editingId ? 'আপডেট করুন' : 'সেভ করুন'}
+                    </button>
+                    {editingId && (
+                      <button onClick={resetInputs} className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-3 rounded-xl font-bold">বাতিল</button>
+                    )}
                   </div>
                 </div>
-              ))}
+              </div>
 
-              {activeTab === 'requests' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {pendingRequests.length === 0 ? <p className="text-center py-10 text-slate-400 col-span-2">কোনো নতুন আবেদন নেই</p> : 
-                    pendingRequests.map(u => (
-                      <div key={u.id} className="bg-white border-2 border-slate-50 p-6 rounded-2xl shadow-sm">
-                        <h4 className="font-bold text-lg">{u.name}</h4>
-                        <p className="text-sm text-slate-500 mb-4">{u.email} | {u.phone}</p>
+              {/* Data List */}
+              <div className="lg:col-span-2">
+                <h3 className="text-lg font-bold mb-6 text-slate-800 flex justify-between items-center">
+                  <span>বিদ্যমান ডাটা লিস্ট</span>
+                  <span className="text-sm font-normal text-slate-400">এডিট বা ডিলিট করতে পারেন</span>
+                </h3>
+
+                <div className="space-y-4">
+                  {activeTab === 'posts' && posts.map(p => (
+                    <div key={p.id} className="bg-white border rounded-2xl p-4 shadow-sm group">
+                      <p className="font-medium line-clamp-2 mb-2">{p.content}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-400">{p.date}</span>
                         <div className="flex gap-2">
-                          <button onClick={() => setUsers(users.map(x => x.id === u.id ? {...x, status: 'approved'} : x))} className="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold">অ্যাপ্রুভ</button>
-                          <button onClick={() => setUsers(users.filter(x => x.id !== u.id))} className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg font-bold">বাতিল</button>
+                          <button onClick={() => handleEdit('posts', p)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><i className="fas fa-edit"></i></button>
+                          <button onClick={() => { if(confirm('ডিলিট করবেন?')) setPosts(posts.filter(x => x.id !== p.id)) }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><i className="fas fa-trash"></i></button>
                         </div>
                       </div>
-                    ))
-                  }
+                    </div>
+                  ))}
+
+                  {activeTab === 'notices' && notices.map(n => (
+                    <div key={n.id} className="bg-white border rounded-2xl p-4 shadow-sm flex justify-between items-center">
+                      <div className="truncate pr-4"><p className="font-bold truncate">{n.title}</p><p className="text-xs text-slate-400">{n.date}</p></div>
+                      <div className="flex gap-2 shrink-0">
+                        <button onClick={() => handleEdit('notices', n)} className="p-2 text-blue-600"><i className="fas fa-edit"></i></button>
+                        <button onClick={() => setNotices(notices.filter(x => x.id !== n.id))} className="p-2 text-red-500"><i className="fas fa-trash"></i></button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {(activeTab === 'members' || activeTab === 'committee') && (activeTab === 'members' ? members : committee).map(m => (
+                    <div key={m.id} className="bg-white border rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                      <div className="flex items-center truncate">
+                        <img src={m.image} className="w-10 h-10 rounded-full mr-3 object-cover" />
+                        <div className="truncate"><p className="font-bold truncate">{m.name}</p><p className="text-xs text-slate-400">{m.role}</p></div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleEdit(activeTab, m)} className="p-2 text-blue-600"><i className="fas fa-edit"></i></button>
+                        <button onClick={() => {
+                          const setter = activeTab === 'members' ? setMembers : setCommittee;
+                          const list = activeTab === 'members' ? members : committee;
+                          setter(list.filter(x => x.id !== m.id));
+                        }} className="p-2 text-red-500"><i className="fas fa-trash"></i></button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
+            </>
+          ) : (
+            /* User Requests List */
+            <div className="lg:col-span-3">
+              <h3 className="text-lg font-bold mb-6 text-slate-800">নতুন ইউজার রেজিস্ট্রেশন রিকোয়েস্ট ({pendingRequests.length})</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {pendingRequests.length === 0 ? <p className="text-center py-10 text-slate-400 col-span-2">কোনো নতুন আবেদন নেই</p> : 
+                  pendingRequests.map(u => (
+                    <div key={u.id} className="bg-white border-2 border-slate-50 p-6 rounded-2xl shadow-sm">
+                      <h4 className="font-bold text-lg">{u.name}</h4>
+                      <p className="text-sm text-slate-500 mb-4">{u.email} | {u.phone}</p>
+                      <div className="flex gap-2">
+                        <button onClick={() => setUsers(users.map(x => x.id === u.id ? {...x, status: 'approved'} : x))} className="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold">অ্যাপ্রুভ</button>
+                        <button onClick={() => setUsers(users.filter(x => x.id !== u.id))} className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg font-bold">বাতিল</button>
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
