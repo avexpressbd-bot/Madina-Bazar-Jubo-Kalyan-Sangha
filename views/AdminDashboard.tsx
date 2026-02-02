@@ -51,6 +51,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Cricket Hub States
   const [cStats, setCStats] = useState(cricketStats);
+  const [newParticipatingTeam, setNewParticipatingTeam] = useState('');
+  
+  // Upcoming Team Form
+  const [teamForm, setTeamForm] = useState({
+    id: '',
+    name: '',
+    logo: '',
+    players: '' // String for easy editing: "p1, p2, p3"
+  });
 
   // General Input States
   const [input1, setInput1] = useState('');
@@ -76,7 +85,49 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleSaveCricket = () => {
     setCricketStats(cStats);
-    alert('ক্রিকেট তথ্য আপডেট করা হয়েছে!');
+    alert('টুর্নামেন্টের সাধারণ তথ্য সেভ করা হয়েছে!');
+  };
+
+  const handleAddParticipatingTeam = () => {
+    if(!newParticipatingTeam) return;
+    setCStats({
+      ...cStats,
+      participatingTeams: [...cStats.participatingTeams, newParticipatingTeam]
+    });
+    setNewParticipatingTeam('');
+  };
+
+  const handleRemoveParticipatingTeam = (name: string) => {
+    setCStats({
+      ...cStats,
+      participatingTeams: cStats.participatingTeams.filter(t => t !== name)
+    });
+  };
+
+  const handleSaveTeam = () => {
+    const playersArr = teamForm.players.split(',').map(p => p.trim()).filter(p => p !== '');
+    const teamObj: Team = {
+      id: teamForm.id || Date.now().toString(),
+      name: teamForm.name,
+      logo: teamForm.logo || 'https://via.placeholder.com/150',
+      players: playersArr
+    };
+
+    if (teamForm.id) {
+      setUpcomingTeams(upcomingTeams.map(t => t.id === teamForm.id ? teamObj : t));
+    } else {
+      setUpcomingTeams([...upcomingTeams, teamObj]);
+    }
+    setTeamForm({ id: '', name: '', logo: '', players: '' });
+  };
+
+  const handleEditTeam = (team: Team) => {
+    setTeamForm({
+      id: team.id,
+      name: team.name,
+      logo: team.logo,
+      players: team.players.join(', ')
+    });
   };
 
   const handleSaveSite = () => {
@@ -164,31 +215,95 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
 
           {activeTab === 'cricket_stats' && (
-            <div className="space-y-8 bg-slate-50 p-8 rounded-3xl border border-slate-100">
-               <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center">
-                <i className="fas fa-cricket-bat-ball mr-3 text-blue-600"></i> ক্রিকেট টুর্নামেন্ট ডাটা এডিট
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="space-y-4">
-                  <h4 className="font-bold border-b pb-2">টুর্নামেন্ট ফলাফল</h4>
-                  <input className="w-full p-3 rounded-xl border" placeholder="বছর" value={cStats.year} onChange={e => setCStats({...cStats, year: e.target.value})} />
-                  <input className="w-full p-3 rounded-xl border" placeholder="চ্যাম্পিয়ন" value={cStats.winner} onChange={e => setCStats({...cStats, winner: e.target.value})} />
-                  <input className="w-full p-3 rounded-xl border" placeholder="রানার-আপ" value={cStats.runnerUp} onChange={e => setCStats({...cStats, runnerUp: e.target.value})} />
-                </div>
-                <div className="space-y-4">
-                  <h4 className="font-bold border-b pb-2">সর্বোচ্চ রান সংগ্রাহক</h4>
-                  <input className="w-full p-3 rounded-xl border" placeholder="নাম" value={cStats.topScorer.name} onChange={e => setCStats({...cStats, topScorer: {...cStats.topScorer, name: e.target.value}})} />
-                  <input className="w-full p-3 rounded-xl border" placeholder="রান" type="number" value={cStats.topScorer.runs} onChange={e => setCStats({...cStats, topScorer: {...cStats.topScorer, runs: parseInt(e.target.value)}})} />
-                  <input className="w-full p-3 rounded-xl border" placeholder="ছবির ইউআরএল" value={cStats.topScorer.image} onChange={e => setCStats({...cStats, topScorer: {...cStats.topScorer, image: e.target.value}})} />
-                </div>
-                <div className="space-y-4">
-                  <h4 className="font-bold border-b pb-2">সর্বোচ্চ উইকেট শিকারী</h4>
-                  <input className="w-full p-3 rounded-xl border" placeholder="নাম" value={cStats.topWicketTaker.name} onChange={e => setCStats({...cStats, topWicketTaker: {...cStats.topWicketTaker, name: e.target.value}})} />
-                  <input className="w-full p-3 rounded-xl border" placeholder="উইকেট" type="number" value={cStats.topWicketTaker.wickets} onChange={e => setCStats({...cStats, topWicketTaker: {...cStats.topWicketTaker, wickets: parseInt(e.target.value)}})} />
-                  <input className="w-full p-3 rounded-xl border" placeholder="ছবির ইউআরএল" value={cStats.topWicketTaker.image} onChange={e => setCStats({...cStats, topWicketTaker: {...cStats.topWicketTaker, image: e.target.value}})} />
-                </div>
-              </div>
-              <button onClick={handleSaveCricket} className="bg-blue-600 text-white font-bold py-4 px-12 rounded-2xl shadow-xl hover:bg-blue-700 transition-all">ক্রিকেট ডাটা সেভ করুন</button>
+            <div className="space-y-12">
+               {/* Result Stats */}
+               <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                  <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center">
+                    <i className="fas fa-trophy mr-3 text-blue-600"></i> ১. বিগত টুর্নামেন্ট ফলাফল
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <input className="w-full p-3 rounded-xl border" placeholder="বছর" value={cStats.year} onChange={e => setCStats({...cStats, year: e.target.value})} />
+                    <input className="w-full p-3 rounded-xl border" placeholder="চ্যাম্পিয়ন" value={cStats.winner} onChange={e => setCStats({...cStats, winner: e.target.value})} />
+                    <input className="w-full p-3 rounded-xl border" placeholder="রানার-আপ" value={cStats.runnerUp} onChange={e => setCStats({...cStats, runnerUp: e.target.value})} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="bg-white p-6 rounded-2xl border">
+                      <h4 className="font-bold mb-4 text-blue-600">সেরা ব্যাটসম্যান</h4>
+                      <input className="w-full p-3 rounded-xl border mb-3" placeholder="নাম" value={cStats.topScorer.name} onChange={e => setCStats({...cStats, topScorer: {...cStats.topScorer, name: e.target.value}})} />
+                      <input className="w-full p-3 rounded-xl border mb-3" placeholder="রান" type="number" value={cStats.topScorer.runs} onChange={e => setCStats({...cStats, topScorer: {...cStats.topScorer, runs: parseInt(e.target.value)}})} />
+                      <input className="w-full p-3 rounded-xl border" placeholder="ছবি URL" value={cStats.topScorer.image} onChange={e => setCStats({...cStats, topScorer: {...cStats.topScorer, image: e.target.value}})} />
+                    </div>
+                    <div className="bg-white p-6 rounded-2xl border">
+                      <h4 className="font-bold mb-4 text-red-600">সেরা বোলার</h4>
+                      <input className="w-full p-3 rounded-xl border mb-3" placeholder="নাম" value={cStats.topWicketTaker.name} onChange={e => setCStats({...cStats, topWicketTaker: {...cStats.topWicketTaker, name: e.target.value}})} />
+                      <input className="w-full p-3 rounded-xl border mb-3" placeholder="উইকেট" type="number" value={cStats.topWicketTaker.wickets} onChange={e => setCStats({...cStats, topWicketTaker: {...cStats.topWicketTaker, wickets: parseInt(e.target.value)}})} />
+                      <input className="w-full p-3 rounded-xl border" placeholder="ছবি URL" value={cStats.topWicketTaker.image} onChange={e => setCStats({...cStats, topWicketTaker: {...cStats.topWicketTaker, image: e.target.value}})} />
+                    </div>
+                  </div>
+                  <button onClick={handleSaveCricket} className="mt-6 bg-blue-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg">ফলাফল আপডেট করুন</button>
+               </div>
+
+               {/* Participating Teams List */}
+               <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                  <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center">
+                    <i className="fas fa-users-rays mr-3 text-blue-600"></i> ২. বিগত আসরের দলসমূহ
+                  </h3>
+                  <div className="flex gap-4 mb-6">
+                    <input className="flex-1 p-3 rounded-xl border" placeholder="দলের নাম লিখুন" value={newParticipatingTeam} onChange={e => setNewParticipatingTeam(e.target.value)} />
+                    <button onClick={handleAddParticipatingTeam} className="bg-green-600 text-white px-6 py-3 rounded-xl font-bold">যোগ করুন</button>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {cStats.participatingTeams.map((team, idx) => (
+                      <div key={idx} className="bg-white px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-3">
+                        <span className="font-medium">{team}</span>
+                        <button onClick={() => handleRemoveParticipatingTeam(team)} className="text-red-500 hover:text-red-700"><i className="fas fa-times"></i></button>
+                      </div>
+                    ))}
+                  </div>
+               </div>
+
+               {/* Upcoming Teams Management */}
+               <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                  <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center">
+                    <i className="fas fa-shield-halved mr-3 text-blue-600"></i> ৩. আসন্ন টুর্নামেন্ট টিম ম্যানেজমেন্ট
+                  </h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Add Team Form */}
+                    <div className="bg-white p-6 rounded-2xl border h-fit">
+                      <h4 className="font-bold mb-4">{teamForm.id ? 'টিম এডিট করুন' : 'নতুন টিম যোগ করুন'}</h4>
+                      <div className="space-y-4">
+                        <input className="w-full p-3 rounded-xl border" placeholder="টিমের নাম" value={teamForm.name} onChange={e => setTeamForm({...teamForm, name: e.target.value})} />
+                        <input className="w-full p-3 rounded-xl border" placeholder="লোগো URL" value={teamForm.logo} onChange={e => setTeamForm({...teamForm, logo: e.target.value})} />
+                        <textarea className="w-full p-3 rounded-xl border" placeholder="প্লেয়ারদের নাম (কমা দিয়ে লিখুন: করিম, রহিম, সজল...)" rows={4} value={teamForm.players} onChange={e => setTeamForm({...teamForm, players: e.target.value})}></textarea>
+                        <div className="flex gap-3">
+                          <button onClick={handleSaveTeam} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold">টিম সেভ করুন</button>
+                          {teamForm.id && <button onClick={() => setTeamForm({id:'', name:'', logo:'', players:''})} className="bg-slate-200 px-4 py-3 rounded-xl font-bold">বাতিল</button>}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Team List */}
+                    <div className="space-y-4">
+                      <h4 className="font-bold">রেজিস্টার্ড টিমস</h4>
+                      {upcomingTeams.length === 0 ? <p className="italic text-slate-400">কোনো টিম নেই</p> : (
+                        upcomingTeams.map(t => (
+                          <div key={t.id} className="bg-white p-4 rounded-xl border flex items-center justify-between group">
+                            <div className="flex items-center gap-4">
+                              <img src={t.logo} className="w-12 h-12 rounded-lg object-cover" />
+                              <div>
+                                <p className="font-bold">{t.name}</p>
+                                <p className="text-xs text-slate-500">{t.players.length} জন প্লেয়ার</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={() => handleEditTeam(t)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><i className="fas fa-edit"></i></button>
+                              <button onClick={() => setUpcomingTeams(upcomingTeams.filter(x => x.id !== t.id))} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i className="fas fa-trash"></i></button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+               </div>
             </div>
           )}
 
@@ -211,10 +326,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* Existing tabs for Posts, Members etc. (Keep their functionality but style like above) */}
+          {/* Other tabs remain similar with their CRUD logic */}
           {(activeTab === 'posts' || activeTab === 'notices' || activeTab === 'members' || activeTab === 'committee' || activeTab === 'gallery') && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Form column */}
                 <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 h-fit">
                     <h4 className="font-bold text-lg mb-6">{editingId ? 'এডিট করুন' : 'নতুন যোগ করুন'}</h4>
                     <div className="space-y-4">
@@ -230,11 +344,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         )}
                         <button 
                             onClick={() => {
-                                // Logic for saving based on activeTab
                                 if(activeTab === 'posts') {
                                     const newPost = {id: editingId || Date.now().toString(), content: input1, mediaUrl: input2, mediaType: (input4 || 'none') as any, date: new Date().toLocaleDateString('bn-BD'), likes: 0};
                                     if(editingId) setPosts(posts.map(p => p.id === editingId ? newPost : p));
                                     else setPosts([newPost, ...posts]);
+                                } else if(activeTab === 'notices') {
+                                    const newNotice = {id: editingId || Date.now().toString(), title: input1, description: input2, date: new Date().toLocaleDateString('bn-BD'), videoUrl: input3};
+                                    if(editingId) setNotices(notices.map(n => n.id === editingId ? newNotice : n));
+                                    else setNotices([newNotice, ...notices]);
+                                } else if(activeTab === 'members') {
+                                    const newMember = {id: editingId || Date.now().toString(), name: input1, role: input2, phone: input3, image: input4 || 'https://picsum.photos/200/200'};
+                                    if(editingId) setMembers(members.map(m => m.id === editingId ? newMember : m));
+                                    else setMembers([...members, newMember]);
+                                } else if(activeTab === 'committee') {
+                                    const newMember = {id: editingId || Date.now().toString(), name: input1, role: input2, phone: input3, image: input4 || 'https://picsum.photos/200/200'};
+                                    if(editingId) setCommittee(committee.map(m => m.id === editingId ? newMember : m));
+                                    else setCommittee([...committee, newMember]);
+                                } else if(activeTab === 'gallery') {
+                                    const newImg = {id: editingId || Date.now().toString(), caption: input1, url: input2};
+                                    if(editingId) setGallery(gallery.map(g => g.id === editingId ? newImg : g));
+                                    else setGallery([...gallery, newImg]);
                                 }
                                 resetInputs();
                             }} 
@@ -244,11 +373,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </button>
                     </div>
                 </div>
-                {/* List column */}
                 <div className="lg:col-span-2 space-y-4">
                     <h4 className="font-bold text-lg mb-4">বিদ্যমান লিস্ট</h4>
                     {activeTab === 'posts' && posts.map(p => (
-                        <div key={p.id} className="bg-white p-4 border rounded-2xl flex justify-between items-center shadow-sm">
+                        <div key={p.id} className="bg-white p-4 border rounded-2xl flex justify-between items-center shadow-sm group">
                             <p className="truncate pr-4 flex-1">{p.content}</p>
                             <div className="flex gap-2">
                                 <button onClick={() => {setInput1(p.content); setInput2(p.mediaUrl || ''); setInput4(p.mediaType); setEditingId(p.id)}} className="text-blue-600 p-2"><i className="fas fa-edit"></i></button>
@@ -256,7 +384,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </div>
                         </div>
                     ))}
-                    {/* Add lists for other tabs similarly */}
+                    {activeTab === 'notices' && notices.map(n => (
+                        <div key={n.id} className="bg-white p-4 border rounded-2xl flex justify-between items-center shadow-sm">
+                            <p className="truncate pr-4 flex-1 font-bold">{n.title}</p>
+                            <div className="flex gap-2">
+                                <button onClick={() => {setInput1(n.title); setInput2(n.description); setInput3(n.videoUrl || ''); setEditingId(n.id)}} className="text-blue-600 p-2"><i className="fas fa-edit"></i></button>
+                                <button onClick={() => setNotices(notices.filter(x => x.id !== n.id))} className="text-red-500 p-2"><i className="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    ))}
+                    {activeTab === 'members' && members.map(m => (
+                        <div key={m.id} className="bg-white p-4 border rounded-2xl flex justify-between items-center shadow-sm">
+                            <p className="truncate pr-4 flex-1">{m.name} - <span className="text-xs text-blue-600 font-bold uppercase">{m.role}</span></p>
+                            <div className="flex gap-2">
+                                <button onClick={() => {setInput1(m.name); setInput2(m.role); setInput3(m.phone); setInput4(m.image); setEditingId(m.id)}} className="text-blue-600 p-2"><i className="fas fa-edit"></i></button>
+                                <button onClick={() => setMembers(members.filter(x => x.id !== m.id))} className="text-red-500 p-2"><i className="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
           )}
@@ -270,11 +415,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <p className="text-sm text-slate-500 mb-4">{u.email} | {u.phone}</p>
                     </div>
                     <div className="flex gap-3 mt-4">
-                        <button onClick={() => setUsers(users.map(x => x.id === u.id ? {...x, status: 'approved'} : x))} className="flex-1 bg-green-600 text-white py-2 rounded-xl font-bold">অ্যাপ্রুভ</button>
-                        <button onClick={() => setUsers(users.filter(x => x.id !== u.id))} className="flex-1 bg-red-100 text-red-600 py-2 rounded-xl font-bold">বাতিল</button>
+                        <button onClick={() => setUsers(users.map(x => x.id === u.id ? {...x, status: 'approved'} : x))} className="flex-1 bg-green-600 text-white py-2 rounded-xl font-bold transition-transform active:scale-95 shadow-md">অ্যাপ্রুভ</button>
+                        <button onClick={() => setUsers(users.filter(x => x.id !== u.id))} className="flex-1 bg-white border-2 border-red-500 text-red-500 py-2 rounded-xl font-bold transition-transform active:scale-95">বাতিল</button>
                     </div>
                   </div>
                 ))}
+                {pendingRequests.length === 0 && <p className="col-span-full text-center py-20 text-slate-400 italic">কোনো পেন্ডিং আবেদন নেই</p>}
              </div>
           )}
         </div>
