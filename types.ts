@@ -25,6 +25,15 @@ export interface Notice {
   videoUrl?: string;
 }
 
+export interface Post {
+  id: string;
+  content: string;
+  mediaUrl?: string;
+  mediaType: 'image' | 'video' | 'none';
+  date: string;
+  likes: number;
+}
+
 export interface Team {
   id: string;
   name: string;

@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { View } from '../types';
+import { View, Post } from '../types';
 
-const Home: React.FC<{ setView: (view: View) => void }> = ({ setView }) => {
+const Home: React.FC<{ setView: (view: View) => void; posts: Post[] }> = ({ setView, posts }) => {
   return (
     <div className="animate-fadeIn">
       {/* Hero Section */}
-      <section className="relative h-[80vh] flex items-center justify-center text-white overflow-hidden">
+      <section className="relative h-[60vh] flex items-center justify-center text-white overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=2000" 
@@ -16,10 +16,10 @@ const Home: React.FC<{ setView: (view: View) => void }> = ({ setView }) => {
         </div>
         <div className="relative z-10 text-center px-4 max-w-4xl">
           <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
-            স্বাগতম মদিনা বাজার যুব কল্যাণ সংঘে
+            মদিনা বাজার যুব কল্যাণ সংঘ
           </h1>
           <p className="text-xl md:text-2xl mb-8 font-light text-slate-200">
-            ঐক্য, সেবা ও প্রগতির পথে আমরা একসাথে এগিয়ে যাচ্ছি। আসুন আমাদের সাথে যুক্ত হয়ে সমাজ পরিবর্তনে ভূমিকা রাখুন।
+            ঐক্য, সেবা ও প্রগতির পথে আমরা একসাথে এগিয়ে যাচ্ছি।
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <button 
@@ -28,57 +28,84 @@ const Home: React.FC<{ setView: (view: View) => void }> = ({ setView }) => {
             >
               মেম্বার হিসেবে যোগ দিন
             </button>
-            <button 
-              onClick={() => setView('about')}
-              className="bg-white hover:bg-slate-100 text-blue-700 px-8 py-3 rounded-full font-bold text-lg transition-all shadow-xl"
-            >
-              আমাদের সম্পর্কে জানুন
-            </button>
           </div>
         </div>
       </section>
 
-      {/* Featured Sections */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-16 text-slate-800 underline decoration-blue-500 underline-offset-8">আমাদের কার্যক্রম</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <FeatureCard 
-              icon="fa-cricket-bat-ball" 
-              title="বার্ষিক ক্রিকেট টুর্নামেন্ট" 
-              desc="প্রতি বছর জাঁকজমকপূর্ণ ক্রিকেট টুর্নামেন্টের আয়োজন করা হয় যেখানে এলাকার প্রতিভাবান খেলোয়াড়রা অংশগ্রহণ করে।"
-              onClick={() => setView('cricket')}
-            />
-            <FeatureCard 
-              icon="fa-hands-helping" 
-              title="সমাজসেবা" 
-              desc="অসহায় মানুষের পাশে দাঁড়ানো এবং এলাকার উন্নয়নে নানা কর্মসূচি পালন করি আমরা।"
-              onClick={() => setView('about')}
-            />
-            <FeatureCard 
-              icon="fa-bullhorn" 
-              title="সচেতনতামূলক সভা" 
-              desc="মাদক ও দুর্নীতির বিরুদ্ধে এবং যুব সমাজকে সঠিক পথ দেখাতে নিয়মিত সভার আয়োজন করা হয়।"
-              onClick={() => setView('notice')}
-            />
+      {/* Main Content: News Feed style */}
+      <section className="py-12 bg-slate-50 min-h-screen">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex justify-between items-center mb-10">
+            <h2 className="text-2xl font-bold text-slate-800 flex items-center">
+              <i className="fas fa-newspaper mr-3 text-blue-600"></i> সর্বশেষ আপডেট
+            </h2>
+            <div className="text-sm font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full border border-blue-100">
+              {posts.length} টি পোস্ট
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            {posts.length === 0 ? (
+              <div className="bg-white p-12 rounded-3xl text-center shadow-sm border border-slate-100">
+                <i className="fas fa-ghost text-4xl text-slate-200 mb-4"></i>
+                <p className="text-slate-500 italic">এখনও কোনো পোস্ট করা হয়নি।</p>
+              </div>
+            ) : (
+              posts.map((post) => (
+                <div key={post.id} className="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+                  {/* Post Header */}
+                  <div className="p-4 flex items-center">
+                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white mr-3">
+                      <i className="fas fa-users"></i>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900">মদিনা বাজার যুব কল্যাণ সংঘ</h4>
+                      <p className="text-xs text-slate-500">{post.date}</p>
+                    </div>
+                  </div>
+
+                  {/* Post Content */}
+                  <div className="px-4 pb-4">
+                    <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">{post.content}</p>
+                  </div>
+
+                  {/* Post Media */}
+                  {post.mediaUrl && (
+                    <div className="bg-slate-100 max-h-[500px] overflow-hidden flex items-center justify-center">
+                      {post.mediaType === 'image' ? (
+                        <img src={post.mediaUrl} className="w-full object-contain" alt="Post media" />
+                      ) : post.mediaType === 'video' ? (
+                        <div className="aspect-video w-full">
+                           {post.mediaUrl.includes('youtube.com') || post.mediaUrl.includes('youtu.be') ? (
+                             <iframe className="w-full h-full" src={post.mediaUrl.replace('watch?v=', 'embed/')} allowFullScreen></iframe>
+                           ) : (
+                             <video src={post.mediaUrl} controls className="w-full h-full"></video>
+                           )}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+
+                  {/* Post Interaction */}
+                  <div className="p-4 border-t border-slate-50 flex justify-between items-center text-slate-500 text-sm">
+                    <button className="flex items-center hover:text-blue-600 transition-colors">
+                      <i className="far fa-thumbs-up mr-2"></i> ভালো লেগেছে
+                    </button>
+                    <button className="flex items-center hover:text-blue-600 transition-colors">
+                      <i className="far fa-comment mr-2"></i> মন্তব্য
+                    </button>
+                    <button className="flex items-center hover:text-blue-600 transition-colors">
+                      <i className="fas fa-share mr-2"></i> শেয়ার
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
     </div>
   );
 };
-
-const FeatureCard: React.FC<{ icon: string; title: string; desc: string; onClick: () => void }> = ({ icon, title, desc, onClick }) => (
-  <div 
-    onClick={onClick}
-    className="p-8 border border-slate-100 rounded-2xl bg-slate-50 hover:shadow-2xl hover:-translate-y-2 transition-all cursor-pointer text-center group"
-  >
-    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-      <i className={`fas ${icon} text-2xl`}></i>
-    </div>
-    <h3 className="text-xl font-bold mb-4 text-slate-800">{title}</h3>
-    <p className="text-slate-600 leading-relaxed">{desc}</p>
-  </div>
-);
 
 export default Home;
