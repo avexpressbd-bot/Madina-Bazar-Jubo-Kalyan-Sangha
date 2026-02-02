@@ -7,6 +7,16 @@ export interface Member {
   image: string;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  status: 'pending' | 'approved';
+  role: 'user' | 'admin';
+}
+
 export interface Notice {
   id: string;
   title: string;

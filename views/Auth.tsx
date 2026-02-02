@@ -1,42 +1,75 @@
 
 import React, { useState } from 'react';
+import { User } from '../types';
 
 interface AuthProps {
   onLogin: (role: 'user' | 'admin') => void;
+  users: User[];
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
 }
 
-const Auth: React.FC<AuthProps> = ({ onLogin }) => {
+const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
   const [isLoginView, setIsLoginView] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: ''
+  });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  // ---------------------------------------------------------
-  // এই ইমেইল এবং পাসওয়ার্ডটি আপনি আপনার গিটহাবে পুশ করার আগে আপনার মতো করে বদলে দিন।
-  // ডোমেইন হোস্ট করার পর এই তথ্য দিয়েই আপনাকে লগইন করতে হবে।
-  // ---------------------------------------------------------
   const ADMIN_EMAIL = 'admin@mbjks.org'; 
   const ADMIN_PASSWORD = 'admin123';
-  // ---------------------------------------------------------
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     if (isLoginView) {
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      // Admin Login Check
+      if (formData.email === ADMIN_EMAIL && formData.password === ADMIN_PASSWORD) {
         onLogin('admin');
-      } 
-      else if (email && password.length >= 6) {
+        return;
+      }
+
+      // User Login Check
+      const foundUser = users.find(u => u.email === formData.email && u.password === formData.password);
+      
+      if (!foundUser) {
+        setError('ভুল ইমেইল অথবা পাসওয়ার্ড!');
+      } else if (foundUser.status === 'pending') {
+        setError('আপনার একাউন্টটি এখনও পেন্ডিং আছে। এডমিন অ্যাপ্রুভ করলে লগইন করতে পারবেন।');
+      } else {
         onLogin('user');
-      } 
-      else {
-        setError('ভুল ইমেইল অথবা পাসওয়ার্ড! পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে।');
       }
     } else {
-      alert('রেজিস্ট্রেশন সফল হয়েছে! এখন লগইন করুন।');
+      // Registration Check
+      if (users.some(u => u.email === formData.email)) {
+        setError('এই ইমেইল দিয়ে ইতিপূর্বেই একাউন্ট খোলা হয়েছে।');
+        return;
+      }
+
+      const newUser: User = {
+        id: Date.now().toString(),
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        status: 'pending',
+        role: 'user'
+      };
+
+      setUsers([...users, newUser]);
+      setSuccess('রেজিস্ট্রেশন সফল হয়েছে! এডমিন আপনার তথ্য যাচাই করে অ্যাপ্রুভ করলে আপনি লগইন করতে পারবেন।');
       setIsLoginView(true);
+      setFormData({ name: '', email: '', phone: '', password: '' });
     }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   return (
@@ -54,48 +87,79 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               {error}
             </div>
           )}
+          {success && (
+            <div className="bg-green-50 text-green-600 p-3 rounded-lg text-xs font-bold border border-green-100 flex items-center">
+              <i className="fas fa-check-circle mr-2"></i>
+              {success}
+            </div>
+          )}
+
+          {!isLoginView && (
+            <>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">আপনার নাম</label>
+                <input 
+                  type="text" 
+                  name="name"
+                  required 
+                  value={formData.name} 
+                  onChange={handleChange}
+                  placeholder="সম্পূর্ণ নাম লিখুন"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">মোবাইল নাম্বার</label>
+                <input 
+                  type="text" 
+                  name="phone"
+                  required 
+                  value={formData.phone} 
+                  onChange={handleChange}
+                  placeholder="০১৭০০-০০০০০০"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+                />
+              </div>
+            </>
+          )}
 
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2">ইমেইল ঠিকানা</label>
-            <div className="relative">
-              <i className="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-              <input 
-                type="email" 
-                required 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="আপনার ইমেইল দিন"
-                className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-              />
-            </div>
+            <input 
+              type="email" 
+              name="email"
+              required 
+              value={formData.email} 
+              onChange={handleChange}
+              placeholder="আপনার ইমেইল দিন"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+            />
           </div>
 
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2">পাসওয়ার্ড</label>
-            <div className="relative">
-              <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-              <input 
-                type="password" 
-                required 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-              />
-            </div>
+            <input 
+              type="password" 
+              name="password"
+              required 
+              value={formData.password} 
+              onChange={handleChange}
+              placeholder="••••••••"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none"
+            />
           </div>
 
           <button 
             type="submit" 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transform active:scale-95 transition-all"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all"
           >
-            {isLoginView ? 'লগইন করুন' : 'একাউন্ট খুলুন'}
+            {isLoginView ? 'লগইন করুন' : 'রেজিস্ট্রেশনের জন্য আবেদন করুন'}
           </button>
 
           <div className="text-center pt-2">
             <button 
               type="button" 
-              onClick={() => { setIsLoginView(!isLoginView); setError(''); }} 
+              onClick={() => { setIsLoginView(!isLoginView); setError(''); setSuccess(''); }} 
               className="text-blue-600 font-bold hover:underline text-sm"
             >
               {isLoginView ? 'নতুন একাউন্ট খুলতে চান? এখানে ক্লিক করুন' : 'ইতিমধ্যেই একাউন্ট আছে? লগইন করুন'}

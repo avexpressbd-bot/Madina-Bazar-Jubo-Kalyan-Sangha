@@ -12,20 +12,23 @@ import Contact from './views/Contact';
 import CricketHub from './views/CricketHub';
 import Auth from './views/Auth';
 import AdminDashboard from './views/AdminDashboard';
-import { View, Member, Notice, TournamentStats, Team, GalleryImage } from './types';
+import { View, Member, Notice, TournamentStats, Team, GalleryImage, User } from './types';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('home');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-
+  
   // Helper to load from localStorage
   const loadState = (key: string, defaultValue: any) => {
     const saved = localStorage.getItem(key);
     return saved ? JSON.parse(saved) : defaultValue;
   };
 
-  // States with Persistence
+  // Auth States
+  const [isLoggedIn, setIsLoggedIn] = useState(() => loadState('mbjks_isLoggedIn', false));
+  const [isAdmin, setIsAdmin] = useState(() => loadState('mbjks_isAdmin', false));
+  const [users, setUsers] = useState<User[]>(() => loadState('mbjks_users', []));
+
+  // Content States
   const [members, setMembers] = useState<Member[]>(() => loadState('mbjks_members', [
     { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সাধারণ মেম্বার', image: 'https://picsum.photos/seed/p1/200/200' },
   ]));
@@ -57,13 +60,16 @@ const App: React.FC = () => {
 
   // Save to localStorage whenever states change
   useEffect(() => {
+    localStorage.setItem('mbjks_isLoggedIn', JSON.stringify(isLoggedIn));
+    localStorage.setItem('mbjks_isAdmin', JSON.stringify(isAdmin));
+    localStorage.setItem('mbjks_users', JSON.stringify(users));
     localStorage.setItem('mbjks_members', JSON.stringify(members));
     localStorage.setItem('mbjks_committee', JSON.stringify(committee));
     localStorage.setItem('mbjks_notices', JSON.stringify(notices));
     localStorage.setItem('mbjks_gallery', JSON.stringify(gallery));
     localStorage.setItem('mbjks_cricketStats', JSON.stringify(cricketStats));
     localStorage.setItem('mbjks_upcomingTeams', JSON.stringify(upcomingTeams));
-  }, [members, committee, notices, gallery, cricketStats, upcomingTeams]);
+  }, [isLoggedIn, isAdmin, users, members, committee, notices, gallery, cricketStats, upcomingTeams]);
 
   const handleLogin = (role: 'user' | 'admin') => {
     setIsLoggedIn(true);
@@ -87,7 +93,7 @@ const App: React.FC = () => {
       case 'notice': return <NoticeBoard notices={notices} />;
       case 'contact': return <Contact />;
       case 'cricket': return <CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} />;
-      case 'auth': return <Auth onLogin={handleLogin} />;
+      case 'auth': return <Auth onLogin={handleLogin} users={users} setUsers={setUsers} />;
       case 'admin': return <AdminDashboard 
         members={members} setMembers={setMembers} 
         committee={committee} setCommittee={setCommittee}
@@ -95,6 +101,7 @@ const App: React.FC = () => {
         gallery={gallery} setGallery={setGallery}
         upcomingTeams={upcomingTeams} setUpcomingTeams={setUpcomingTeams}
         cricketStats={cricketStats} setCricketStats={setCricketStats}
+        users={users} setUsers={setUsers}
       />;
       default: return <Home setView={setCurrentView} />;
     }
