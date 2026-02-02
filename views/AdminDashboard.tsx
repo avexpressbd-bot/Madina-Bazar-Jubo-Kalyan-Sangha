@@ -27,10 +27,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setSaveStatus(null), 3000);
   };
 
+  const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+
   const [newPost, setNewPost] = useState({ content: '', mediaUrl: '', mediaType: 'none' as any });
   const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
   const [newPerson, setNewPerson] = useState({ name: '', role: '', phone: '', image: '', type: 'member' });
-  const [newGallery, setNewGallery] = useState({ url: '', caption: '' });
 
   const handleAddPost = async () => {
     if (!newPost.content) return alert('পোস্টের লেখা লিখুন');
@@ -70,15 +71,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handlePersonSubmit = async () => {
     if(!newPerson.name) return alert('নাম আবশ্যক');
     const typePath = newPerson.type === 'member' ? 'members' : 'committee';
-    const id = editingPersonId || push(ref(db, typePath)).key || Date.now().toString();
     
-    // If updating and changing type, delete from old path
+    // Check if we are updating and moving between types
     if (editingPersonId) {
-      const oldType = members.find(m => m.id === editingPersonId) ? 'members' : 'committee';
-      if (oldType !== typePath) await set(ref(db, `${oldType}/${editingPersonId}`), null);
+       const isCurrentlyMember = members.some(m => m.id === editingPersonId);
+       const currentPath = isCurrentlyMember ? 'members' : 'committee';
+       if (currentPath !== typePath) {
+          await set(ref(db, `${currentPath}/${editingPersonId}`), null);
+       }
     }
 
-    await set(ref(db, `${typePath}/${id}`), { ...newPerson, id });
+    const id = editingPersonId || push(ref(db, typePath)).key || Date.now().toString();
+    
+    const personData: Member = {
+      id,
+      name: newPerson.name,
+      role: newPerson.role,
+      phone: newPerson.phone,
+      image: newPerson.image || DEFAULT_AVATAR
+    };
+
+    await set(ref(db, `${typePath}/${id}`), personData);
     setEditingPersonId(null);
     setNewPerson({ name: '', role: '', phone: '', image: '', type: 'member' });
     showSuccess('মেম্বার তথ্য সেভ হয়েছে');
@@ -97,7 +110,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       name: userToApprove.name,
       phone: userToApprove.phone,
       role: 'সাধারণ সদস্য',
-      image: 'https://cdn-icons-png.flaticon.com/512/149/149071.png'
+      image: DEFAULT_AVATAR
     };
 
     await update(ref(db), updates);
@@ -140,7 +153,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <p className="text-sm text-slate-500 mb-4">{user.phone} | {user.email}</p>
                   <div className="flex gap-2">
                     <button onClick={() => handleApproveUser(user.id)} className="flex-1 bg-blue-600 text-white py-2 rounded-xl font-bold">অনুমোদন</button>
-                    <button onClick={() => set(ref(db, `users/${user.id}`), null)} className="px-4 bg-slate-200 py-2 rounded-xl text-slate-500">বাতিল</button>
+                    <button onClick={async () => await set(ref(db, `users/${user.id}`), null)} className="px-4 bg-slate-200 py-2 rounded-xl text-slate-500">বাতিল</button>
                   </div>
                 </div>
               ))}
@@ -214,21 +227,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <input className="w-full p-3 border rounded-xl mb-3" placeholder="নাম" value={newPerson.name} onChange={e => setNewPerson({...newPerson, name: e.target.value})} />
                   <input className="w-full p-3 border rounded-xl mb-3" placeholder="পদবী" value={newPerson.role} onChange={e => setNewPerson({...newPerson, role: e.target.value})} />
                   <input className="w-full p-3 border rounded-xl mb-3" placeholder="মোবাইল" value={newPerson.phone} onChange={e => setNewPerson({...newPerson, phone: e.target.value})} />
+                  <input className="w-full p-3 border rounded-xl mb-3" placeholder="ছবি URL (ঐচ্ছিক)" value={newPerson.image} onChange={e => setNewPerson({...newPerson, image: e.target.value})} />
                   <select className="w-full p-3 border rounded-xl mb-4" value={newPerson.type} onChange={e => setNewPerson({...newPerson, type: e.target.value})}>
                     <option value="member">সাধারণ মেম্বার</option><option value="committee">কমিটি মেম্বার</option>
                   </select>
                   <button onClick={handlePersonSubmit} className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">{editingPersonId ? 'আপডেট করুন' : 'সেভ করুন'}</button>
+                  {editingPersonId && (
+                    <button onClick={() => { setEditingPersonId(null); setNewPerson({name:'', role:'', phone:'', image:'', type:'member'}); }} className="w-full mt-2 text-slate-500 font-bold">বাতিল করুন</button>
+                  )}
                </div>
                <div className="space-y-3 max-h-[500px] overflow-y-auto no-scrollbar">
                   {[...committee, ...members].map(m => (
-                    <div key={m.id} className="p-3 bg-white border rounded-xl flex justify-between items-center">
-                      <div><p className="font-bold">{m.name}</p><p className="text-xs text-blue-600">{m.role}</p></div>
+                    <div key={m.id} className="p-3 bg-white border rounded-xl flex justify-between items-center shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <img src={m.image} className="w-10 h-10 rounded-full object-cover" alt="" />
+                        <div><p className="font-bold">{m.name}</p><p className="text-xs text-blue-600">{m.role}</p></div>
+                      </div>
                       <div className="flex gap-2">
-                        <button onClick={() => { setEditingPersonId(m.id); setNewPerson({name: m.name, role: m.role, phone: m.phone, image: m.image, type: members.includes(m) ? 'member' : 'committee'}); }} className="text-blue-500"><i className="fas fa-edit"></i></button>
-                        <button onClick={async () => { if(window.confirm('মুছে ফেলবেন?')) await set(ref(db, `${members.includes(m) ? 'members' : 'committee'}/${m.id}`), null); }} className="text-red-500"><i className="fas fa-trash"></i></button>
+                        <button onClick={() => { 
+                          setEditingPersonId(m.id); 
+                          setNewPerson({
+                            name: m.name, 
+                            role: m.role, 
+                            phone: m.phone, 
+                            image: m.image === DEFAULT_AVATAR ? '' : m.image, 
+                            type: members.some(mem => mem.id === m.id) ? 'member' : 'committee'
+                          }); 
+                        }} className="text-blue-500 p-2"><i className="fas fa-edit"></i></button>
+                        <button onClick={async () => { 
+                          if(window.confirm('মুছে ফেলবেন?')) {
+                             const path = members.some(mem => mem.id === m.id) ? 'members' : 'committee';
+                             await set(ref(db, `${path}/${m.id}`), null);
+                             showSuccess('সফলভাবে মুছে ফেলা হয়েছে');
+                          }
+                        }} className="text-red-500 p-2"><i className="fas fa-trash"></i></button>
                       </div>
                     </div>
                   ))}
+                  {[...committee, ...members].length === 0 && <p className="text-center py-10 text-slate-400">কোন মেম্বার পাওয়া যায়নি</p>}
                </div>
             </div>
           )}

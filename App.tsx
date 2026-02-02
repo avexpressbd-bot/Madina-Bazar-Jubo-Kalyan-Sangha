@@ -82,23 +82,28 @@ const App: React.FC = () => {
     const unsubscribers = Object.entries(refs).map(([key, dbRef]) => {
       return onValue(dbRef, (snapshot) => {
         const data = snapshot.val();
+        
+        // Handle collections (Arrays) vs Objects
+        const isObjectCollection = !['footerData', 'aboutData', 'cricketStats'].includes(key);
+        let formattedData: any;
+
         if (data) {
-          // If it's a collection, convert object to array
-          const isObjectCollection = !['footerData', 'aboutData', 'cricketStats'].includes(key);
-          const formattedData = isObjectCollection ? Object.values(data) : data;
+          formattedData = isObjectCollection ? Object.values(data) : data;
+        } else {
+          formattedData = isObjectCollection ? [] : (key === 'cricketStats' ? cricketStats : (key === 'aboutData' ? aboutData : footerData));
+        }
           
-          switch(key) {
-            case 'users': setUsers(formattedData as User[]); break;
-            case 'posts': setPosts((formattedData as Post[]).reverse()); break;
-            case 'members': setMembers(formattedData as Member[]); break;
-            case 'committee': setCommittee(formattedData as Member[]); break;
-            case 'notices': setNotices(formattedData as Notice[]); break;
-            case 'gallery': setGallery(formattedData as GalleryImage[]); break;
-            case 'upcomingTeams': setUpcomingTeams(formattedData as Team[]); break;
-            case 'footerData': setFooterData(formattedData as FooterData); break;
-            case 'aboutData': setAboutData(formattedData as AboutData); break;
-            case 'cricketStats': setCricketStats(formattedData as TournamentStats); break;
-          }
+        switch(key) {
+          case 'users': setUsers(formattedData as User[]); break;
+          case 'posts': setPosts((formattedData as Post[]).reverse()); break;
+          case 'members': setMembers(formattedData as Member[]); break;
+          case 'committee': setCommittee(formattedData as Member[]); break;
+          case 'notices': setNotices(formattedData as Notice[]); break;
+          case 'gallery': setGallery(formattedData as GalleryImage[]); break;
+          case 'upcomingTeams': setUpcomingTeams(formattedData as Team[]); break;
+          case 'footerData': setFooterData(formattedData as FooterData); break;
+          case 'aboutData': setAboutData(formattedData as AboutData); break;
+          case 'cricketStats': setCricketStats(formattedData as TournamentStats); break;
         }
       });
     });
