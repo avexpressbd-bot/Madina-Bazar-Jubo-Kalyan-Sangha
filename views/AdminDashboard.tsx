@@ -20,43 +20,65 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
   members, committee, notices, gallery, upcomingTeams, cricketStats, users, posts, footerData, aboutData
 }) => {
-  const pendingRequests = users.filter(u => u.status === 'pending');
   const [activeTab, setActiveTab] = useState<'posts' | 'notices' | 'members' | 'committee' | 'gallery' | 'requests' | 'site_settings'>('posts');
+  const pendingRequests = users.filter(u => u.status === 'pending');
 
-  const [input1, setInput1] = useState('');
-  const [input2, setInput2] = useState('');
-  const [input3, setInput3] = useState('');
-  const [input4, setInput4] = useState('');
+  // Form States
+  const [postContent, setPostContent] = useState('');
+  const [postMedia, setPostMedia] = useState('');
+  const [postMediaType, setPostMediaType] = useState<'image' | 'video' | 'none'>('none');
 
-  // Universal Save Function
-  const handleAddItem = async (collectionName: string) => {
-    if (!input1) return alert('অনুগ্রহ করে নাম বা টাইটেল দিন');
+  const [noticeTitle, setNoticeTitle] = useState('');
+  const [noticeDesc, setNoticeDesc] = useState('');
+  const [noticeVideo, setNoticeVideo] = useState('');
+
+  const [memberName, setMemberName] = useState('');
+  const [memberRole, setMemberRole] = useState('');
+  const [memberImg, setMemberImg] = useState('');
+  const [memberPhone, setMemberPhone] = useState('');
+
+  const [galleryUrl, setGalleryUrl] = useState('');
+  const [galleryCap, setGalleryCap] = useState('');
+
+  // Save Functions
+  const handleAddPost = async () => {
+    if (!postContent) return alert('পোস্টের কন্টেন্ট দিন');
+    const id = 'post-' + Date.now();
+    await setDoc(doc(db, 'posts', id), {
+      id, content: postContent, mediaUrl: postMedia, mediaType: postMediaType,
+      date: new Date().toLocaleDateString('bn-BD'), likes: 0
+    });
+    setPostContent(''); setPostMedia(''); setPostMediaType('none');
+    alert('পোস্ট পাবলিশ হয়েছে!');
+  };
+
+  const handleAddNotice = async () => {
+    if (!noticeTitle) return alert('নোটিশের টাইটেল দিন');
+    const id = 'notice-' + Date.now();
+    await setDoc(doc(db, 'notices', id), {
+      id, title: noticeTitle, description: noticeDesc, videoUrl: noticeVideo,
+      date: new Date().toLocaleDateString('bn-BD')
+    });
+    setNoticeTitle(''); setNoticeDesc(''); setNoticeVideo('');
+    alert('নোটিশ পাবলিশ হয়েছে!');
+  };
+
+  const handleAddPerson = async (collectionName: 'members' | 'committee') => {
+    if (!memberName) return alert('নাম দিন');
     const id = collectionName + '-' + Date.now();
-    let data: any = { id };
+    await setDoc(doc(db, collectionName, id), {
+      id, name: memberName, role: memberRole, image: memberImg, phone: memberPhone
+    });
+    setMemberName(''); setMemberRole(''); setMemberImg(''); setMemberPhone('');
+    alert('সফলভাবে যোগ হয়েছে!');
+  };
 
-    switch(collectionName) {
-      case 'posts':
-        data = { ...data, content: input1, mediaUrl: input2, mediaType: input4 || 'none', date: new Date().toLocaleDateString('bn-BD'), likes: 0 };
-        break;
-      case 'notices':
-        data = { ...data, title: input1, description: input2, videoUrl: input3, date: new Date().toLocaleDateString('bn-BD') };
-        break;
-      case 'members':
-      case 'committee':
-        data = { ...data, name: input1, role: input2, image: input3, phone: input4 };
-        break;
-      case 'gallery':
-        data = { ...data, url: input1, caption: input2 };
-        break;
-    }
-
-    try {
-      await setDoc(doc(db, collectionName, id), data);
-      setInput1(''); setInput2(''); setInput3(''); setInput4('');
-      alert('সফলভাবে ডাটাবেসে যোগ হয়েছে!');
-    } catch (e) {
-      alert('এরর: ডাটা সেভ হয়নি।');
-    }
+  const handleAddGallery = async () => {
+    if (!galleryUrl) return alert('ছবির URL দিন');
+    const id = 'gallery-' + Date.now();
+    await setDoc(doc(db, 'gallery', id), { id, url: galleryUrl, caption: galleryCap });
+    setGalleryUrl(''); setGalleryCap('');
+    alert('গ্যালারিতে যোগ হয়েছে!');
   };
 
   const handleDelete = async (collectionName: string, id: string) => {
@@ -69,34 +91,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     await updateDoc(doc(db, 'users', id), { status: 'approved' });
   };
 
-  const handleSaveGlobal = async (key: string, data: any) => {
-    await setDoc(doc(db, 'settings', 'global'), { [key]: data }, { merge: true });
-    alert('সেটিংস আপডেট হয়েছে!');
+  const handleUpdateSettings = async (newData: Partial<FooterData>) => {
+    await setDoc(doc(db, 'settings', 'global'), { footerData: { ...footerData, ...newData } }, { merge: true });
+    alert('আপডেট হয়েছে!');
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fadeIn">
-      <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
-        <div className="bg-slate-900 p-6 text-white">
-          <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
-            <h2 className="text-xl font-black flex items-center">
-              <i className="fas fa-database mr-3 text-blue-500"></i> এডমিন প্যানেল
+      {/* Dashboard Card */}
+      <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100 min-h-[70vh]">
+        
+        {/* Header & Tabs */}
+        <div className="bg-slate-900 px-8 py-6">
+          <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
+            <h2 className="text-2xl font-black text-white flex items-center">
+              <i className="fas fa-user-shield mr-3 text-blue-500"></i>
+              এডমিন ড্যাশবোর্ড
             </h2>
-            <div className="flex bg-slate-800 p-1 rounded-xl overflow-x-auto no-scrollbar max-w-full">
+            <div className="flex flex-wrap bg-slate-800 p-1.5 rounded-2xl gap-1">
               {[
-                {id: 'posts', label: 'ফিড'},
-                {id: 'notices', label: 'নোটিশ'},
-                {id: 'members', label: 'মেম্বার'},
-                {id: 'committee', label: 'কমিটি'},
-                {id: 'gallery', label: 'গ্যালারি'},
-                {id: 'requests', label: `আবেদন (${pendingRequests.length})`},
-                {id: 'site_settings', label: 'সাইট'},
+                {id: 'posts', label: 'ফিড', icon: 'fa-rss'},
+                {id: 'notices', label: 'নোটিশ', icon: 'fa-bullhorn'},
+                {id: 'members', label: 'মেম্বার', icon: 'fa-users'},
+                {id: 'committee', label: 'কমিটি', icon: 'fa-user-tie'},
+                {id: 'gallery', label: 'গ্যালারি', icon: 'fa-images'},
+                {id: 'requests', label: `আবেদন (${pendingRequests.length})`, icon: 'fa-user-plus'},
+                {id: 'site_settings', label: 'সাইট', icon: 'fa-cog'},
               ].map(tab => (
                 <button 
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
                 >
+                  <i className={`fas ${tab.icon}`}></i>
                   {tab.label}
                 </button>
               ))}
@@ -104,84 +131,175 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
 
-        <div className="p-8">
-          {/* Requests Tab */}
-          {activeTab === 'requests' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pendingRequests.map(u => (
-                <div key={u.id} className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm">
-                  <h4 className="font-bold text-slate-800">{u.name}</h4>
-                  <p className="text-xs text-slate-500 mb-4">{u.email} | {u.phone}</p>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleApproveUser(u.id)} className="flex-1 bg-green-600 text-white py-2 rounded-lg text-xs font-bold">অ্যাপ্রুভ</button>
-                    <button onClick={() => handleDelete('users', u.id)} className="flex-1 bg-red-500 text-white py-2 rounded-lg text-xs font-bold">বাতিল</button>
-                  </div>
+        <div className="p-8 lg:p-12">
+          
+          {/* POSTS PANEL */}
+          {activeTab === 'posts' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-sm h-fit">
+                <h4 className="font-bold text-slate-800 mb-6 flex items-center"><i className="fas fa-plus-circle mr-2 text-blue-600"></i> নতুন পোস্ট</h4>
+                <div className="space-y-4">
+                  <textarea className="w-full p-4 text-sm rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20" rows={4} placeholder="কি লিখতে চান?" value={postContent} onChange={e => setPostContent(e.target.value)} />
+                  <input className="w-full p-4 text-sm rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20" placeholder="মিডিয়া URL (ছবি বা ভিডিও)" value={postMedia} onChange={e => setPostMedia(e.target.value)} />
+                  <select className="w-full p-4 text-sm rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20" value={postMediaType} onChange={e => setPostMediaType(e.target.value as any)}>
+                    <option value="none">কোন মিডিয়া নেই</option>
+                    <option value="image">ছবি (Image)</option>
+                    <option value="video">ভিডিও (Video)</option>
+                  </select>
+                  <button onClick={handleAddPost} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-blue-700 transition-all">পাবলিশ করুন</button>
                 </div>
-              ))}
-              {pendingRequests.length === 0 && <p className="col-span-full text-center py-10 text-slate-400">নতুন কোনো আবেদন নেই।</p>}
+              </div>
+              <div className="lg:col-span-2 space-y-4 max-h-[600px] overflow-y-auto pr-4 no-scrollbar">
+                <h4 className="font-bold text-slate-400 uppercase text-xs tracking-widest mb-4">সাম্প্রতিক পোস্টসমূহ</h4>
+                {posts.map(p => (
+                  <div key={p.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group">
+                    <div className="flex items-center gap-4 overflow-hidden">
+                      <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
+                        <i className={`fas ${p.mediaType === 'image' ? 'fa-image' : p.mediaType === 'video' ? 'fa-video' : 'fa-align-left'} text-blue-500`}></i>
+                      </div>
+                      <p className="text-sm font-medium text-slate-700 truncate">{p.content}</p>
+                    </div>
+                    <button onClick={() => handleDelete('posts', p.id)} className="p-2 text-red-100 group-hover:text-red-500 transition-colors"><i className="fas fa-trash"></i></button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Other Tabs Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Input Column */}
-            {activeTab !== 'requests' && activeTab !== 'site_settings' && (
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 h-fit">
-                <h4 className="font-bold mb-4 capitalize">{activeTab} যোগ করুন</h4>
-                <div className="space-y-3">
-                  <input className="w-full p-3 text-sm rounded-xl border" placeholder={activeTab === 'posts' ? 'কন্টেন্ট' : 'টাইটেল/নাম'} value={input1} onChange={e => setInput1(e.target.value)} />
-                  <input className="w-full p-3 text-sm rounded-xl border" placeholder={activeTab === 'posts' ? 'মিডিয়া URL' : 'রোল/ডেসক্রিপশন'} value={input2} onChange={e => setInput2(e.target.value)} />
-                  {activeTab !== 'posts' && <input className="w-full p-3 text-sm rounded-xl border" placeholder="Image/Video URL" value={input3} onChange={e => setInput3(e.target.value)} />}
-                  {activeTab !== 'gallery' && <input className="w-full p-3 text-sm rounded-xl border" placeholder={activeTab === 'posts' ? 'মিডিয়া টাইপ (image/video)' : 'মোবাইল নং'} value={input4} onChange={e => setInput4(e.target.value)} />}
-                  <button onClick={() => handleAddItem(activeTab)} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl text-sm shadow-lg">ডাটাবেসে পাঠান</button>
+          {/* NOTICES PANEL */}
+          {activeTab === 'notices' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-sm h-fit">
+                <h4 className="font-bold text-slate-800 mb-6 flex items-center"><i className="fas fa-plus-circle mr-2 text-orange-600"></i> নতুন নোটিশ</h4>
+                <div className="space-y-4">
+                  <input className="w-full p-4 text-sm rounded-2xl border border-slate-200" placeholder="নোটিশ টাইটেল" value={noticeTitle} onChange={e => setNoticeTitle(e.target.value)} />
+                  <textarea className="w-full p-4 text-sm rounded-2xl border border-slate-200" rows={4} placeholder="বিস্তারিত তথ্য" value={noticeDesc} onChange={e => setNoticeDesc(e.target.value)} />
+                  <input className="w-full p-4 text-sm rounded-2xl border border-slate-200" placeholder="ভিডিও URL (যদি থাকে)" value={noticeVideo} onChange={e => setNoticeVideo(e.target.value)} />
+                  <button onClick={handleAddNotice} className="w-full bg-orange-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-orange-700 transition-all">নোটিশ ছাড়ুন</button>
                 </div>
               </div>
-            )}
+              <div className="lg:col-span-2 space-y-4 max-h-[600px] overflow-y-auto pr-4 no-scrollbar">
+                 {notices.map(n => (
+                  <div key={n.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group">
+                    <div>
+                      <h5 className="font-bold text-slate-800">{n.title}</h5>
+                      <p className="text-xs text-slate-400 mt-1">{n.date}</p>
+                    </div>
+                    <button onClick={() => handleDelete('notices', n.id)} className="p-2 text-red-500"><i className="fas fa-trash"></i></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-            {/* List Column */}
-            <div className="lg:col-span-2 space-y-3 max-h-[600px] overflow-y-auto no-scrollbar pr-2">
-              {activeTab === 'posts' && posts.map(i => (
-                <div key={i.id} className="p-4 bg-white border rounded-xl flex justify-between items-center shadow-sm">
-                  <p className="text-sm truncate flex-1">{i.content}</p>
-                  <button onClick={() => handleDelete('posts', i.id)} className="text-red-500 ml-4"><i className="fas fa-trash"></i></button>
-                </div>
-              ))}
-              {activeTab === 'members' && members.map(i => (
-                <div key={i.id} className="p-4 bg-white border rounded-xl flex justify-between items-center shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <img src={i.image} className="w-8 h-8 rounded-full object-cover" />
-                    <p className="text-sm font-bold">{i.name}</p>
-                  </div>
-                  <button onClick={() => handleDelete('members', i.id)} className="text-red-500"><i className="fas fa-trash"></i></button>
-                </div>
-              ))}
-              {activeTab === 'notices' && notices.map(i => (
-                <div key={i.id} className="p-4 bg-white border rounded-xl flex justify-between items-center shadow-sm">
-                  <p className="text-sm font-bold">{i.title}</p>
-                  <button onClick={() => handleDelete('notices', i.id)} className="text-red-500"><i className="fas fa-trash"></i></button>
-                </div>
-              ))}
-              {activeTab === 'gallery' && gallery.map(i => (
-                <div key={i.id} className="p-4 bg-white border rounded-xl flex justify-between items-center shadow-sm">
-                  <img src={i.url} className="w-10 h-10 rounded object-cover" />
-                  <p className="text-sm truncate flex-1 ml-4">{i.caption}</p>
-                  <button onClick={() => handleDelete('gallery', i.id)} className="text-red-500"><i className="fas fa-trash"></i></button>
-                </div>
-              ))}
-              {activeTab === 'site_settings' && (
+          {/* MEMBERS / COMMITTEE PANEL */}
+          {(activeTab === 'members' || activeTab === 'committee') && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-sm h-fit">
+                <h4 className="font-bold text-slate-800 mb-6 flex items-center"><i className="fas fa-plus-circle mr-2 text-green-600"></i> নতুন {activeTab === 'members' ? 'মেম্বার' : 'কমিটি মেম্বার'}</h4>
                 <div className="space-y-4">
-                  <div className="bg-slate-50 p-4 rounded-xl">
-                    <label className="text-xs font-bold text-slate-500 uppercase">ব্রেকিং নিউজ</label>
-                    <textarea className="w-full p-3 mt-2 rounded-lg border text-sm" defaultValue={footerData.urgentNews} onBlur={e => handleSaveGlobal('footerData', {...footerData, urgentNews: e.target.value})} />
+                  <input className="w-full p-4 text-sm rounded-2xl border border-slate-200" placeholder="নাম" value={memberName} onChange={e => setMemberName(e.target.value)} />
+                  <input className="w-full p-4 text-sm rounded-2xl border border-slate-200" placeholder="পদবী / রোল" value={memberRole} onChange={e => setMemberRole(e.target.value)} />
+                  <input className="w-full p-4 text-sm rounded-2xl border border-slate-200" placeholder="মোবাইল নম্বর" value={memberPhone} onChange={e => setMemberPhone(e.target.value)} />
+                  <input className="w-full p-4 text-sm rounded-2xl border border-slate-200" placeholder="ছবির URL" value={memberImg} onChange={e => setMemberImg(e.target.value)} />
+                  <button onClick={() => handleAddPerson(activeTab)} className="w-full bg-green-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-green-700 transition-all">সেভ করুন</button>
+                </div>
+              </div>
+              <div className="lg:col-span-2 space-y-4 max-h-[600px] overflow-y-auto pr-4 no-scrollbar">
+                 {(activeTab === 'members' ? members : committee).map(m => (
+                  <div key={m.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group">
+                    <div className="flex items-center gap-4">
+                      <img src={m.image || 'https://via.placeholder.com/150'} className="w-12 h-12 rounded-full object-cover border-2 border-slate-100" />
+                      <div>
+                        <h5 className="font-bold text-slate-800 text-sm">{m.name}</h5>
+                        <p className="text-[10px] text-blue-600 font-bold uppercase">{m.role}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => handleDelete(activeTab, m.id)} className="p-2 text-red-500"><i className="fas fa-trash"></i></button>
                   </div>
-                  <div className="bg-slate-50 p-4 rounded-xl">
-                    <label className="text-xs font-bold text-slate-500 uppercase">হিরো ইমেজ URL</label>
-                    <input className="w-full p-3 mt-2 rounded-lg border text-sm" defaultValue={footerData.heroImageUrl} onBlur={e => handleSaveGlobal('footerData', {...footerData, heroImageUrl: e.target.value})} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* GALLERY PANEL */}
+          {activeTab === 'gallery' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-sm h-fit">
+                <h4 className="font-bold text-slate-800 mb-6 flex items-center"><i className="fas fa-plus-circle mr-2 text-purple-600"></i> গ্যালারিতে যোগ</h4>
+                <div className="space-y-4">
+                  <input className="w-full p-4 text-sm rounded-2xl border border-slate-200" placeholder="ছবির URL" value={galleryUrl} onChange={e => setGalleryUrl(e.target.value)} />
+                  <input className="w-full p-4 text-sm rounded-2xl border border-slate-200" placeholder="ক্যাপশন (সংক্ষিপ্ত বর্ণনা)" value={galleryCap} onChange={e => setGalleryCap(e.target.value)} />
+                  <button onClick={handleAddGallery} className="w-full bg-purple-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-purple-700 transition-all">ছবি যোগ করুন</button>
+                </div>
+              </div>
+              <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto no-scrollbar">
+                {gallery.map(g => (
+                  <div key={g.id} className="relative aspect-square rounded-2xl overflow-hidden group">
+                    <img src={g.url} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center p-2 text-center">
+                      <p className="text-white text-[10px] mb-2">{g.caption}</p>
+                      <button onClick={() => handleDelete('gallery', g.id)} className="bg-red-500 text-white p-2 rounded-lg text-xs"><i className="fas fa-trash"></i></button>
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* REQUESTS PANEL */}
+          {activeTab === 'requests' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {pendingRequests.map(u => (
+                <div key={u.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-md">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+                      <i className="fas fa-user"></i>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-800 text-sm">{u.name}</h4>
+                      <p className="text-[10px] text-slate-400">{u.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleApproveUser(u.id)} className="flex-1 bg-green-600 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-green-700 transition-all">অ্যাপ্রুভ</button>
+                    <button onClick={() => handleDelete('users', u.id)} className="flex-1 bg-red-50 text-red-500 py-2.5 rounded-xl text-xs font-bold hover:bg-red-100 transition-all">বাতিল</button>
+                  </div>
+                </div>
+              ))}
+              {pendingRequests.length === 0 && (
+                <div className="col-span-full py-20 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                  <i className="fas fa-check-circle text-4xl text-slate-200 mb-4"></i>
+                  <p className="text-slate-400 font-medium">কোনো পেন্ডিং আবেদন নেই।</p>
                 </div>
               )}
             </div>
-          </div>
+          )}
+
+          {/* SITE SETTINGS PANEL */}
+          {activeTab === 'site_settings' && (
+            <div className="max-w-3xl mx-auto space-y-10">
+               <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
+                 <h4 className="font-bold text-slate-800 mb-6 flex items-center"><i className="fas fa-bolt mr-2 text-yellow-500"></i> ব্রেকিং নিউজ আপডেট</h4>
+                 <div className="flex gap-4">
+                   <input className="flex-1 p-4 rounded-2xl border border-slate-200 text-sm" defaultValue={footerData.urgentNews} id="urgentNewsInput" />
+                   <button onClick={() => handleUpdateSettings({ urgentNews: (document.getElementById('urgentNewsInput') as HTMLInputElement).value })} className="bg-slate-900 text-white px-8 rounded-2xl font-bold text-sm">আপডেট</button>
+                 </div>
+               </div>
+
+               <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
+                 <h4 className="font-bold text-slate-800 mb-6 flex items-center"><i className="fas fa-image mr-2 text-blue-500"></i> হিরো ইমেজ (হোম পেজ ব্যানার)</h4>
+                 <div className="flex gap-4">
+                   <input className="flex-1 p-4 rounded-2xl border border-slate-200 text-sm" defaultValue={footerData.heroImageUrl} id="heroImageInput" />
+                   <button onClick={() => handleUpdateSettings({ heroImageUrl: (document.getElementById('heroImageInput') as HTMLInputElement).value })} className="bg-slate-900 text-white px-8 rounded-2xl font-bold text-sm">আপডেট</button>
+                 </div>
+                 <div className="mt-6 rounded-2xl overflow-hidden shadow-sm h-32 border border-white">
+                   <img src={footerData.heroImageUrl} className="w-full h-full object-cover" />
+                 </div>
+               </div>
+            </div>
+          )}
+
         </div>
       </div>
     </div>
