@@ -12,7 +12,7 @@ import Contact from './views/Contact';
 import CricketHub from './views/CricketHub';
 import Auth from './views/Auth';
 import AdminDashboard from './views/AdminDashboard';
-import { View, Member, Notice, TournamentStats, Team, GalleryImage, User, Post, FooterData } from './types';
+import { View, Member, Notice, TournamentStats, Team, GalleryImage, User, Post, FooterData, AboutData } from './types';
 
 const App: React.FC = () => {
   const loadState = (key: string, defaultValue: any) => {
@@ -32,6 +32,7 @@ const App: React.FC = () => {
 
   const [footerData, setFooterData] = useState<FooterData>(() => loadState('mbjks_footer', {
     heroImageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=2000',
+    urgentNews: 'স্বাগতম! মদিনা বাজার যুব কল্যাণ সংঘের নতুন ওয়েবসাইট এখন লাইভ। সকল মেম্বারদের রেজিস্ট্রেশন করার অনুরোধ করা হচ্ছে।',
     description: 'একটি সামাজিক সংগঠন যা যুবদের উন্নয়ন ও সমাজসেবায় নিবেদিত। আমরা শিক্ষা, ক্রীড়া ও সমাজসেবামূলক কর্মকাণ্ডের মাধ্যমে আমাদের এলাকাকে সমৃদ্ধ করতে চাই।',
     address: 'মদিনা বাজার, সিলেট, বাংলাদেশ',
     phone: '+৮৮০ ১৭০০ ০০০০০০',
@@ -41,8 +42,20 @@ const App: React.FC = () => {
     instagram: '#'
   }));
 
+  const [aboutData, setAboutData] = useState<AboutData>(() => loadState('mbjks_about', {
+    description: 'মদিনা বাজার যুব কল্যাণ সংঘ একটি অরাজনৈতিক ও সেবামূলক সংগঠন। এলাকার যুবকদের সঠিক পথে পরিচালনা করা এবং সমাজের অবহেলিত মানুষের পাশে দাঁড়ানোর লক্ষ্য নিয়ে আমাদের এই পথচলা শুরু হয়।',
+    mission: 'সুশিক্ষিত ও আদর্শ যুব সমাজ গড়ে তোলা যারা দেশের উন্নয়নে অবদান রাখবে।',
+    vision: 'মাদক মুক্ত সমাজ গঠন এবং অসহায়দের শিক্ষা ও চিকিৎসায় সহায়তা করা।',
+    stats: [
+      { label: 'সেবা গ্রহীতা', count: '৫০০+' },
+      { label: 'সাফল্যের বছর', count: '১০+' },
+      { label: 'ক্রিকেট টুর্নামেন্ট', count: '৫+' },
+      { label: 'স্বেচ্ছাসেবী', count: '৫০+' }
+    ]
+  }));
+
   const [members, setMembers] = useState<Member[]>(() => loadState('mbjks_members', [
-    { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সাধারণ মেম্বার', image: 'https://picsum.photos/seed/p1/200/200' },
+    { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সভাপতি', image: 'https://picsum.photos/seed/p1/200/200' },
   ]));
 
   const [committee, setCommittee] = useState<Member[]>(() => loadState('mbjks_committee', [
@@ -50,10 +63,7 @@ const App: React.FC = () => {
     { id: 'c2', name: 'আব্দুল হামিদ', role: 'সাধারণ সম্পাদক', phone: '01811223344', image: 'https://picsum.photos/seed/c2/300/300' },
   ]));
 
-  const [notices, setNotices] = useState<Notice[]>(() => loadState('mbjks_notices', [
-    { id: '1', title: 'বার্ষিক সাধারণ সভা ২০২৪', description: 'আগামী শুক্রবার ক্লাবের সভা কক্ষে বার্ষিক সাধারণ সভা অনুষ্ঠিত হবে।', date: '২০২৪-০৫-২০', videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
-  ]));
-
+  const [notices, setNotices] = useState<Notice[]>(() => loadState('mbjks_notices', []));
   const [gallery, setGallery] = useState<GalleryImage[]>(() => loadState('mbjks_gallery', []));
 
   const [cricketStats, setCricketStats] = useState<TournamentStats>(() => loadState('mbjks_cricketStats', {
@@ -80,13 +90,8 @@ const App: React.FC = () => {
     localStorage.setItem('mbjks_cricketStats', JSON.stringify(cricketStats));
     localStorage.setItem('mbjks_upcomingTeams', JSON.stringify(upcomingTeams));
     localStorage.setItem('mbjks_footer', JSON.stringify(footerData));
-  }, [currentView, isLoggedIn, isAdmin, users, posts, members, committee, notices, gallery, cricketStats, upcomingTeams, footerData]);
-
-  const handleLogin = (role: 'user' | 'admin') => {
-    setIsLoggedIn(true);
-    setIsAdmin(role === 'admin');
-    setCurrentView(role === 'admin' ? 'admin' : 'home');
-  };
+    localStorage.setItem('mbjks_about', JSON.stringify(aboutData));
+  }, [currentView, isLoggedIn, isAdmin, users, posts, members, committee, notices, gallery, cricketStats, upcomingTeams, footerData, aboutData]);
 
   const handleLogout = () => {
     setIsLoggedIn(false);
@@ -96,20 +101,17 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case 'home': return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} />;
-      case 'about': return <About />;
+      case 'home': return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} />;
+      case 'about': return <About data={aboutData} />;
       case 'members': return <Members members={members} />;
       case 'committee': return <Committee members={committee} />;
       case 'gallery': return <Gallery images={gallery} />;
       case 'notice': return <NoticeBoard notices={notices} />;
       case 'contact': return <Contact footerData={footerData} />;
       case 'cricket': return <CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} />;
-      case 'auth': return <Auth onLogin={handleLogin} users={users} setUsers={setUsers} />;
+      case 'auth': return <Auth onLogin={(role) => { setIsLoggedIn(true); setIsAdmin(role === 'admin'); setCurrentView(role === 'admin' ? 'admin' : 'home'); }} users={users} setUsers={setUsers} />;
       case 'admin': 
-        if (!isAdmin) {
-          setCurrentView('auth');
-          return null;
-        }
+        if (!isAdmin) return null;
         return <AdminDashboard 
           members={members} setMembers={setMembers} 
           committee={committee} setCommittee={setCommittee}
@@ -120,15 +122,16 @@ const App: React.FC = () => {
           users={users} setUsers={setUsers}
           posts={posts} setPosts={setPosts}
           footerData={footerData} setFooterData={setFooterData}
+          aboutData={aboutData} setAboutData={setAboutData}
         />;
-      default: return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} />;
+      default: return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} />;
     }
   };
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar currentView={currentView} setView={setCurrentView} isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} />
-      <main className="flex-grow pt-20">{renderView()}</main>
+      <main className="flex-grow pt-16">{renderView()}</main>
       <Footer setView={setCurrentView} footerData={footerData} />
     </div>
   );

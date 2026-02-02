@@ -34,8 +34,19 @@ export interface Post {
   likes: number;
 }
 
+export interface AboutData {
+  description: string;
+  mission: string;
+  vision: string;
+  stats: {
+    label: string;
+    count: string;
+  }[];
+}
+
 export interface FooterData {
   heroImageUrl: string;
+  urgentNews: string;
   description: string;
   address: string;
   phone: string;
