@@ -13,129 +13,99 @@ import CricketHub from './views/CricketHub';
 import Auth from './views/Auth';
 import AdminDashboard from './views/AdminDashboard';
 import { View, Member, Notice, TournamentStats, Team, GalleryImage, User, Post, FooterData, AboutData } from './types';
-import { db } from './firebase';
-import { doc, onSnapshot, collection, setDoc } from 'firebase/firestore';
 
 const App: React.FC = () => {
-  // Initialize states from localStorage to persist login
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem('mbjks_isLoggedIn') === 'true';
-  });
-  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
-    return localStorage.getItem('mbjks_isAdmin') === 'true';
-  });
-  const [currentView, setCurrentView] = useState<View>(() => {
-    const savedAdmin = localStorage.getItem('mbjks_isAdmin') === 'true';
-    return savedAdmin ? 'admin' : 'home';
-  });
-  
-  // States to be synced with Firestore
-  const [users, setUsers] = useState<User[]>([]);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [committee, setCommittee] = useState<Member[]>([]);
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [gallery, setGallery] = useState<GalleryImage[]>([]);
-  const [upcomingTeams, setUpcomingTeams] = useState<Team[]>([]);
-  
-  const [footerData, setFooterData] = useState<FooterData>({
+  const loadState = (key: string, defaultValue: any) => {
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : defaultValue;
+    } catch (e) {
+      return defaultValue;
+    }
+  };
+
+  const [currentView, setCurrentView] = useState<View>(() => loadState('mbjks_currentView', 'home'));
+  const [isLoggedIn, setIsLoggedIn] = useState(() => loadState('mbjks_isLoggedIn', false));
+  const [isAdmin, setIsAdmin] = useState(() => loadState('mbjks_isAdmin', false));
+  const [users, setUsers] = useState<User[]>(() => loadState('mbjks_users', []));
+  const [posts, setPosts] = useState<Post[]>(() => loadState('mbjks_posts', []));
+
+  const defaultFooter: FooterData = {
     heroImageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=2000',
-    urgentNews: 'স্বাগতম! মদিনা বাজার যুব কল্যাণ সংঘের নতুন ওয়েবসাইট এখন লাইভ।',
-    description: 'একটি সামাজিক সংগঠন যা যুবদের উন্নয়ন ও সমাজসেবায় নিবেদিত।',
+    urgentNews: 'স্বাগতম! মদিনা বাজার যুব কল্যাণ সংঘের নতুন ওয়েবসাইট এখন লাইভ। সকল মেম্বারদের রেজিস্ট্রেশন করার অনুরোধ করা হচ্ছে।',
+    description: 'একটি সামাজিক সংগঠন যা যুবদের উন্নয়ন ও সমাজসেবায় নিবেদিত। আমরা শিক্ষা, ক্রীড়া ও সমাজসেবামূলক কর্মকাণ্ডের মাধ্যমে আমাদের এলাকাকে সমৃদ্ধ করতে চাই।',
     address: 'মদিনা বাজার, সিলেট, বাংলাদেশ',
     phone: '+৮৮০ ১৭০০ ০০০০০০',
     email: 'info@mbjks.org',
     facebook: '#',
     youtube: '#',
     instagram: '#'
+  };
+
+  const [footerData, setFooterData] = useState<FooterData>(() => {
+    const saved = loadState('mbjks_footer', null);
+    return saved ? { ...defaultFooter, ...saved } : defaultFooter;
   });
 
-  const [aboutData, setAboutData] = useState<AboutData>({
-    description: 'মদিনা বাজার যুব কল্যাণ সংঘ একটি অরাজনৈতিক ও সেবামূলক সংগঠন।',
-    mission: 'সুশিক্ষিত ও আদর্শ যুব সমাজ গড়ে তোলা।',
-    vision: 'মাদক মুক্ত সমাজ গঠন।',
+  const defaultAbout: AboutData = {
+    description: 'মদিনা বাজার যুব কল্যাণ সংঘ একটি অরাজনৈতিক ও সেবামূলক সংগঠন। এলাকার যুবকদের সঠিক পথে পরিচালনা করা এবং সমাজের অবহেলিত মানুষের পাশে দাঁড়ানোর লক্ষ্য নিয়ে আমাদের এই পথচলা শুরু হয়।',
+    mission: 'সুশিক্ষিত ও আদর্শ যুব সমাজ গড়ে তোলা যারা দেশের উন্নয়নে অবদান রাখবে।',
+    vision: 'মাদক মুক্ত সমাজ গঠন এবং অসহায়দের শিক্ষা ও চিকিৎসায় সহায়তা করা।',
     stats: [
       { label: 'সেবা গ্রহীতা', count: '৫০০+' },
       { label: 'সাফল্যের বছর', count: '১০+' },
       { label: 'ক্রিকেট টুর্নামেন্ট', count: '৫+' },
       { label: 'স্বেচ্ছাসেবী', count: '৫০+' }
     ]
+  };
+
+  const [aboutData, setAboutData] = useState<AboutData>(() => {
+    const saved = loadState('mbjks_about', null);
+    return saved ? { ...defaultAbout, ...saved } : defaultAbout;
   });
 
-  const [cricketStats, setCricketStats] = useState<TournamentStats>({
+  const [members, setMembers] = useState<Member[]>(() => loadState('mbjks_members', [
+    { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সভাপতি', image: 'https://picsum.photos/seed/p1/200/200' },
+  ]));
+
+  const [committee, setCommittee] = useState<Member[]>(() => loadState('mbjks_committee', [
+    { id: 'c1', name: 'মোঃ করিম উদ্দিন', role: 'সভাপতি', phone: '01711223344', image: 'https://picsum.photos/seed/c1/300/300' },
+    { id: 'c2', name: 'আব্দুল হামিদ', role: 'সাধারণ সম্পাদক', phone: '01811223344', image: 'https://picsum.photos/seed/c2/300/300' },
+  ]));
+
+  const [notices, setNotices] = useState<Notice[]>(() => loadState('mbjks_notices', []));
+  const [gallery, setGallery] = useState<GalleryImage[]>(() => loadState('mbjks_gallery', []));
+
+  const [cricketStats, setCricketStats] = useState<TournamentStats>(() => loadState('mbjks_cricketStats', {
     year: '২০২৩',
     winner: 'মদিনা বাজার রাইডার্স',
     runnerUp: 'সেবা সংঘ স্পার্টানস',
     topScorer: { name: 'সাব্বির আহমেদ', runs: 342, image: 'https://picsum.photos/seed/cs1/200/200' },
     topWicketTaker: { name: 'মিজানুর রহমান', wickets: 14, image: 'https://picsum.photos/seed/cs2/200/200' },
     participatingTeams: ['রাইডার্স', 'স্পার্টানস', 'টাইটানস', 'ওয়ারিয়র্স']
-  });
+  }));
 
-  // Real-time synchronization for all collections
+  const [upcomingTeams, setUpcomingTeams] = useState<Team[]>(() => loadState('mbjks_upcomingTeams', []));
+
   useEffect(() => {
-    const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
-      setUsers(snap.docs.map(doc => doc.data() as User));
-    });
-
-    const unsubPosts = onSnapshot(collection(db, 'posts'), (snap) => {
-      setPosts(snap.docs.map(doc => doc.data() as Post).sort((a,b) => b.id.localeCompare(a.id)));
-    });
-
-    const unsubMembers = onSnapshot(collection(db, 'members'), (snap) => {
-      setMembers(snap.docs.map(doc => doc.data() as Member));
-    });
-
-    const unsubCommittee = onSnapshot(collection(db, 'committee'), (snap) => {
-      setCommittee(snap.docs.map(doc => doc.data() as Member));
-    });
-
-    const unsubNotices = onSnapshot(collection(db, 'notices'), (snap) => {
-      setNotices(snap.docs.map(doc => doc.data() as Notice));
-    });
-
-    const unsubGallery = onSnapshot(collection(db, 'gallery'), (snap) => {
-      setGallery(snap.docs.map(doc => doc.data() as GalleryImage));
-    });
-
-    const unsubUpcomingTeams = onSnapshot(collection(db, 'upcomingTeams'), (snap) => {
-      setUpcomingTeams(snap.docs.map(doc => doc.data() as Team));
-    });
-
-    const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (data.footerData) setFooterData(data.footerData);
-        if (data.aboutData) setAboutData(data.aboutData);
-        if (data.cricketStats) setCricketStats(data.cricketStats);
-      }
-    });
-
-    return () => {
-      unsubUsers(); unsubPosts(); unsubMembers(); unsubCommittee();
-      unsubNotices(); unsubGallery(); unsubUpcomingTeams(); unsubSettings();
-    };
-  }, []);
-
-  const handleLogin = (role: 'user' | 'admin') => {
-    setIsLoggedIn(true);
-    const isAdminRole = role === 'admin';
-    setIsAdmin(isAdminRole);
-    
-    // Save to localStorage
-    localStorage.setItem('mbjks_isLoggedIn', 'true');
-    localStorage.setItem('mbjks_isAdmin', isAdminRole ? 'true' : 'false');
-    
-    setCurrentView(isAdminRole ? 'admin' : 'home');
-  };
+    localStorage.setItem('mbjks_currentView', JSON.stringify(currentView));
+    localStorage.setItem('mbjks_isLoggedIn', JSON.stringify(isLoggedIn));
+    localStorage.setItem('mbjks_isAdmin', JSON.stringify(isAdmin));
+    localStorage.setItem('mbjks_users', JSON.stringify(users));
+    localStorage.setItem('mbjks_posts', JSON.stringify(posts));
+    localStorage.setItem('mbjks_members', JSON.stringify(members));
+    localStorage.setItem('mbjks_committee', JSON.stringify(committee));
+    localStorage.setItem('mbjks_notices', JSON.stringify(notices));
+    localStorage.setItem('mbjks_gallery', JSON.stringify(gallery));
+    localStorage.setItem('mbjks_cricketStats', JSON.stringify(cricketStats));
+    localStorage.setItem('mbjks_upcomingTeams', JSON.stringify(upcomingTeams));
+    localStorage.setItem('mbjks_footer', JSON.stringify(footerData));
+    localStorage.setItem('mbjks_about', JSON.stringify(aboutData));
+  }, [currentView, isLoggedIn, isAdmin, users, posts, members, committee, notices, gallery, cricketStats, upcomingTeams, footerData, aboutData]);
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setIsAdmin(false);
-    
-    // Clear localStorage
-    localStorage.removeItem('mbjks_isLoggedIn');
-    localStorage.removeItem('mbjks_isAdmin');
-    
     setCurrentView('home');
   };
 
@@ -149,15 +119,20 @@ const App: React.FC = () => {
       case 'notice': return <NoticeBoard notices={notices} />;
       case 'contact': return <Contact footerData={footerData} />;
       case 'cricket': return <CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} />;
-      case 'auth': return <Auth onLogin={handleLogin} users={users} />;
+      case 'auth': return <Auth onLogin={(role) => { setIsLoggedIn(true); setIsAdmin(role === 'admin'); setCurrentView(role === 'admin' ? 'admin' : 'home'); }} setUsers={setUsers} />;
       case 'admin': 
-        if (!isAdmin) return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} />;
+        if (!isAdmin) return null;
         return <AdminDashboard 
-          members={members} committee={committee}
-          notices={notices} gallery={gallery}
-          upcomingTeams={upcomingTeams} cricketStats={cricketStats}
-          users={users} posts={posts}
-          footerData={footerData} aboutData={aboutData}
+          members={members} setMembers={setMembers} 
+          committee={committee} setCommittee={setCommittee}
+          notices={notices} setNotices={setNotices}
+          gallery={gallery} setGallery={setGallery}
+          upcomingTeams={upcomingTeams} setUpcomingTeams={setUpcomingTeams}
+          cricketStats={cricketStats} setCricketStats={setCricketStats}
+          users={users} setUsers={setUsers}
+          posts={posts} setPosts={setPosts}
+          footerData={footerData} setFooterData={setFooterData}
+          aboutData={aboutData} setAboutData={setAboutData}
         />;
       default: return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} />;
     }
