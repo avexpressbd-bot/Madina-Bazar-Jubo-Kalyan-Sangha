@@ -1,8 +1,14 @@
 
 import React from 'react';
-import { View, Post } from '../types';
+import { View, Post, TournamentStats } from '../types';
 
-const Home: React.FC<{ setView: (view: View) => void; posts: Post[]; heroImageUrl: string; urgentNews: string }> = ({ setView, posts, heroImageUrl, urgentNews }) => {
+const Home: React.FC<{ 
+  setView: (view: View) => void; 
+  posts: Post[]; 
+  heroImageUrl: string; 
+  urgentNews: string;
+  cricketStats: TournamentStats;
+}> = ({ setView, posts, heroImageUrl, urgentNews, cricketStats }) => {
   const newsText = urgentNews || "স্বাগতম! মদিনা বাজার যুব কল্যাণ সংঘের ওয়েবসাইটে আপনাকে স্বাগতম।";
 
   return (
@@ -64,6 +70,80 @@ const Home: React.FC<{ setView: (view: View) => void; posts: Post[]; heroImageUr
           animation-play-state: paused;
         }
       `}</style>
+
+      {/* Tournament Highlights Section */}
+      <section className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-black text-slate-800 flex items-center justify-center gap-3">
+              <i className="fas fa-trophy text-yellow-500 animate-bounce"></i> {cricketStats.year} আসরের সেরা মুহূর্ত
+            </h2>
+            <div className="h-1.5 w-24 bg-blue-600 mx-auto mt-2 rounded-full"></div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Champion */}
+            <div className="bg-gradient-to-b from-yellow-50 to-white p-6 rounded-[2rem] border-2 border-yellow-200 shadow-lg text-center transform hover:-translate-y-1 transition-all">
+              <div className="relative mb-4">
+                <img 
+                  src={cricketStats.winnerImage || 'https://cdn-icons-png.flaticon.com/512/3221/3221841.png'} 
+                  className="w-24 h-24 mx-auto rounded-2xl object-cover border-4 border-white shadow-md" 
+                />
+                <div className="absolute -top-2 -right-2 bg-yellow-400 text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                  <i className="fas fa-crown text-xs"></i>
+                </div>
+              </div>
+              <p className="text-[10px] text-yellow-600 font-black uppercase tracking-widest">চ্যাম্পিয়ন</p>
+              <h4 className="text-xl font-black text-slate-800 mt-1">{cricketStats.winner}</h4>
+            </div>
+
+            {/* Runner Up */}
+            <div className="bg-gradient-to-b from-slate-50 to-white p-6 rounded-[2rem] border-2 border-slate-200 shadow-lg text-center transform hover:-translate-y-1 transition-all">
+              <div className="relative mb-4">
+                <img 
+                  src={cricketStats.runnerUpImage || 'https://cdn-icons-png.flaticon.com/512/3221/3221841.png'} 
+                  className="w-24 h-24 mx-auto rounded-2xl object-cover border-4 border-white shadow-md" 
+                />
+                <div className="absolute -top-2 -right-2 bg-slate-400 text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                  <i className="fas fa-medal text-xs"></i>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">রানার-আপ</p>
+              <h4 className="text-xl font-black text-slate-800 mt-1">{cricketStats.runnerUp}</h4>
+            </div>
+
+            {/* Top Scorer */}
+            <div className="bg-gradient-to-b from-blue-50 to-white p-6 rounded-[2rem] border-2 border-blue-100 shadow-lg text-center transform hover:-translate-y-1 transition-all">
+              <div className="relative mb-4">
+                <img 
+                  src={cricketStats.topScorer.image || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} 
+                  className="w-24 h-24 mx-auto rounded-full object-cover border-4 border-white shadow-md" 
+                />
+                <div className="absolute -bottom-2 right-1/2 translate-x-1/2 bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-bold border-2 border-white">
+                  {cricketStats.topScorer.runs} রান
+                </div>
+              </div>
+              <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">সেরা ব্যাটার</p>
+              <h4 className="text-xl font-black text-slate-800 mt-1">{cricketStats.topScorer.name}</h4>
+            </div>
+
+            {/* Top Wicket Taker */}
+            <div className="bg-gradient-to-b from-red-50 to-white p-6 rounded-[2rem] border-2 border-red-100 shadow-lg text-center transform hover:-translate-y-1 transition-all">
+              <div className="relative mb-4">
+                <img 
+                  src={cricketStats.topWicketTaker.image || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} 
+                  className="w-24 h-24 mx-auto rounded-full object-cover border-4 border-white shadow-md" 
+                />
+                <div className="absolute -bottom-2 right-1/2 translate-x-1/2 bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-bold border-2 border-white">
+                  {cricketStats.topWicketTaker.wickets} উইকেট
+                </div>
+              </div>
+              <p className="text-[10px] text-red-600 font-black uppercase tracking-widest">সেরা বোলার</p>
+              <h4 className="text-xl font-black text-slate-800 mt-1">{cricketStats.topWicketTaker.name}</h4>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Main Content Feed */}
       <section className="py-16 bg-slate-50 min-h-screen">

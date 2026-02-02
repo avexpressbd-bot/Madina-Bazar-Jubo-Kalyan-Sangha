@@ -53,8 +53,10 @@ const App: React.FC = () => {
 
   const [cricketStats, setCricketStats] = useState<TournamentStats>({
     year: '২০২৪', winner: '-', runnerUp: '-',
-    topScorer: { name: '-', runs: 0, image: 'https://picsum.photos/seed/cs1/200/200' },
-    topWicketTaker: { name: '-', wickets: 0, image: 'https://picsum.photos/seed/cs2/200/200' },
+    winnerImage: 'https://cdn-icons-png.flaticon.com/512/3221/3221841.png',
+    runnerUpImage: 'https://cdn-icons-png.flaticon.com/512/3221/3221841.png',
+    topScorer: { name: '-', runs: 0, image: 'https://cdn-icons-png.flaticon.com/512/3221/3221841.png' },
+    topWicketTaker: { name: '-', wickets: 0, image: 'https://cdn-icons-png.flaticon.com/512/3221/3221841.png' },
     participatingTeams: []
   });
 
@@ -129,7 +131,7 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case 'home': return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} />;
+      case 'home': return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} />;
       case 'about': return <About data={aboutData} />;
       case 'members': return <Members members={members} />;
       case 'committee': return <Committee members={committee} />;
@@ -148,7 +150,7 @@ const App: React.FC = () => {
           upcomingTeams={upcomingTeams} cricketStats={cricketStats} users={users} posts={posts}
           footerData={footerData} aboutData={aboutData}
         />;
-      default: return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} />;
+      default: return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} />;
     }
   };
 

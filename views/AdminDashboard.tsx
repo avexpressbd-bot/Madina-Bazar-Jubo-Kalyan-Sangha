@@ -45,7 +45,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   useEffect(() => {
     setLocalCricketStats(cricketStats || {
-      year: '', winner: '', runnerUp: '',
+      year: '', winner: '', winnerImage: '', runnerUp: '', runnerUpImage: '',
       topScorer: { name: '', runs: 0, image: '' },
       topWicketTaker: { name: '', wickets: 0, image: '' },
       participatingTeams: []
@@ -133,13 +133,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <label className="text-xs font-bold text-slate-500 uppercase block mb-2">টুর্নামেন্ট বছর</label>
                     <input className="w-full p-4 border rounded-2xl" value={localCricketStats.year} onChange={e => setLocalCricketStats({...localCricketStats, year: e.target.value})} />
                   </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase block mb-2">চ্যাম্পিয়ন দল</label>
-                    <input className="w-full p-4 border rounded-2xl" value={localCricketStats.winner} onChange={e => setLocalCricketStats({...localCricketStats, winner: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase block mb-2">রানার-আপ দল</label>
-                    <input className="w-full p-4 border rounded-2xl" value={localCricketStats.runnerUp} onChange={e => setLocalCricketStats({...localCricketStats, runnerUp: e.target.value})} />
+                  <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase block">চ্যাম্পিয়ন দল</label>
+                      <input className="w-full p-4 border rounded-2xl" placeholder="দলের নাম" value={localCricketStats.winner} onChange={e => setLocalCricketStats({...localCricketStats, winner: e.target.value})} />
+                      <input className="w-full p-3 border rounded-xl text-xs" placeholder="দলের লোগো/ছবি URL" value={localCricketStats.winnerImage} onChange={e => setLocalCricketStats({...localCricketStats, winnerImage: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase block">রানার-আপ দল</label>
+                      <input className="w-full p-4 border rounded-2xl" placeholder="দলের নাম" value={localCricketStats.runnerUp} onChange={e => setLocalCricketStats({...localCricketStats, runnerUp: e.target.value})} />
+                      <input className="w-full p-3 border rounded-xl text-xs" placeholder="দলের লোগো/ছবি URL" value={localCricketStats.runnerUpImage} onChange={e => setLocalCricketStats({...localCricketStats, runnerUpImage: e.target.value})} />
+                    </div>
                   </div>
                 </div>
 
@@ -289,7 +293,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* Remaining Tabs (People, Notices, Gallery, Requests) kept from previous turn for full functionality */}
+          {/* Remaining Tabs (People, Notices, Gallery, Requests) */}
           {activeTab === 'people' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                <div id="member-form" className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 h-fit">
@@ -355,7 +359,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* ... notices and requests logic remains identical to previous functional versions ... */}
           {activeTab === 'notices' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 h-fit">

@@ -72,7 +72,9 @@ export interface GalleryImage {
 export interface TournamentStats {
   year: string;
   winner: string;
+  winnerImage?: string;
   runnerUp: string;
+  runnerUpImage?: string;
   topScorer: { name: string; runs: number; image: string };
   topWicketTaker: { name: string; wickets: number; image: string };
   participatingTeams: string[];
