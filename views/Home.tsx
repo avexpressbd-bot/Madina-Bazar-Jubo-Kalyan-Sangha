@@ -3,6 +3,8 @@ import React from 'react';
 import { View, Post } from '../types';
 
 const Home: React.FC<{ setView: (view: View) => void; posts: Post[]; heroImageUrl: string; urgentNews: string }> = ({ setView, posts, heroImageUrl, urgentNews }) => {
+  const newsText = urgentNews || "স্বাগতম! মদিনা বাজার যুব কল্যাণ সংঘের ওয়েবসাইটে আপনাকে স্বাগতম।";
+
   return (
     <div className="animate-fadeIn">
       {/* Hero Section */}
@@ -33,12 +35,20 @@ const Home: React.FC<{ setView: (view: View) => void; posts: Post[]; heroImageUr
       {/* Breaking News Ticker */}
       <div className="bg-slate-900 text-white py-3 overflow-hidden border-b border-slate-800 flex items-center shadow-xl sticky top-16 z-40">
         <div className="bg-red-600 px-6 py-1.5 font-black text-sm uppercase italic shrink-0 z-10 ml-4 rounded-md shadow-lg flex items-center">
-          <i className="fas fa-bolt mr-2 animate-pulse"></i> ব্রেকিং নিউজ
+          <i className="fas fa-bolt mr-2 animate-pulse text-yellow-400"></i> ব্রেকিং নিউজ
         </div>
-        <div className="whitespace-nowrap flex animate-marquee hover:pause ml-6">
-           <p className="text-lg font-medium px-10 tracking-wide">{urgentNews} <span className="mx-6 text-blue-500">•</span></p>
-           <p className="text-lg font-medium px-10 tracking-wide">{urgentNews} <span className="mx-6 text-blue-500">•</span></p>
-           <p className="text-lg font-medium px-10 tracking-wide">{urgentNews} <span className="mx-6 text-blue-500">•</span></p>
+        <div className="relative flex overflow-hidden whitespace-nowrap ml-4 flex-1">
+          <div className="animate-marquee flex">
+            <span className="text-lg font-medium px-10 tracking-wide flex items-center">
+              {newsText} <i className="fas fa-star mx-6 text-blue-500 text-[10px]"></i>
+            </span>
+            <span className="text-lg font-medium px-10 tracking-wide flex items-center">
+              {newsText} <i className="fas fa-star mx-6 text-blue-500 text-[10px]"></i>
+            </span>
+            <span className="text-lg font-medium px-10 tracking-wide flex items-center">
+              {newsText} <i className="fas fa-star mx-6 text-blue-500 text-[10px]"></i>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -48,10 +58,9 @@ const Home: React.FC<{ setView: (view: View) => void; posts: Post[]; heroImageUr
           100% { transform: translateX(-33.33%); }
         }
         .animate-marquee {
-          display: flex;
-          animation: marquee 25s linear infinite;
+          animation: marquee 30s linear infinite;
         }
-        .hover\\:pause:hover {
+        .animate-marquee:hover {
           animation-play-state: paused;
         }
       `}</style>
@@ -107,7 +116,7 @@ const Home: React.FC<{ setView: (view: View) => void; posts: Post[]; heroImageUr
                     </div>
                   )}
 
-                  {/* Post Footer */}
+                  {/* Post Interaction */}
                   <div className="px-6 py-4 flex justify-between items-center text-slate-400 font-bold text-sm">
                     <button className="flex items-center hover:text-blue-600 transition-colors group">
                       <i className="far fa-thumbs-up mr-2 text-lg group-hover:scale-125 transition-transform"></i> ভালো লেগেছে

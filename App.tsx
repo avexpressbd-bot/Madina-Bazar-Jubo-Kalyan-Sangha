@@ -30,7 +30,7 @@ const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>(() => loadState('mbjks_users', []));
   const [posts, setPosts] = useState<Post[]>(() => loadState('mbjks_posts', []));
 
-  const [footerData, setFooterData] = useState<FooterData>(() => loadState('mbjks_footer', {
+  const defaultFooter: FooterData = {
     heroImageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=2000',
     urgentNews: 'স্বাগতম! মদিনা বাজার যুব কল্যাণ সংঘের নতুন ওয়েবসাইট এখন লাইভ। সকল মেম্বারদের রেজিস্ট্রেশন করার অনুরোধ করা হচ্ছে।',
     description: 'একটি সামাজিক সংগঠন যা যুবদের উন্নয়ন ও সমাজসেবায় নিবেদিত। আমরা শিক্ষা, ক্রীড়া ও সমাজসেবামূলক কর্মকাণ্ডের মাধ্যমে আমাদের এলাকাকে সমৃদ্ধ করতে চাই।',
@@ -40,9 +40,15 @@ const App: React.FC = () => {
     facebook: '#',
     youtube: '#',
     instagram: '#'
-  }));
+  };
 
-  const [aboutData, setAboutData] = useState<AboutData>(() => loadState('mbjks_about', {
+  const [footerData, setFooterData] = useState<FooterData>(() => {
+    const saved = loadState('mbjks_footer', null);
+    // Merge defaults with saved state to prevent missing properties
+    return saved ? { ...defaultFooter, ...saved } : defaultFooter;
+  });
+
+  const defaultAbout: AboutData = {
     description: 'মদিনা বাজার যুব কল্যাণ সংঘ একটি অরাজনৈতিক ও সেবামূলক সংগঠন। এলাকার যুবকদের সঠিক পথে পরিচালনা করা এবং সমাজের অবহেলিত মানুষের পাশে দাঁড়ানোর লক্ষ্য নিয়ে আমাদের এই পথচলা শুরু হয়।',
     mission: 'সুশিক্ষিত ও আদর্শ যুব সমাজ গড়ে তোলা যারা দেশের উন্নয়নে অবদান রাখবে।',
     vision: 'মাদক মুক্ত সমাজ গঠন এবং অসহায়দের শিক্ষা ও চিকিৎসায় সহায়তা করা।',
@@ -52,7 +58,12 @@ const App: React.FC = () => {
       { label: 'ক্রিকেট টুর্নামেন্ট', count: '৫+' },
       { label: 'স্বেচ্ছাসেবী', count: '৫০+' }
     ]
-  }));
+  };
+
+  const [aboutData, setAboutData] = useState<AboutData>(() => {
+    const saved = loadState('mbjks_about', null);
+    return saved ? { ...defaultAbout, ...saved } : defaultAbout;
+  });
 
   const [members, setMembers] = useState<Member[]>(() => loadState('mbjks_members', [
     { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সভাপতি', image: 'https://picsum.photos/seed/p1/200/200' },
