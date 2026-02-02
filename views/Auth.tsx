@@ -4,11 +4,10 @@ import { User } from '../types';
 
 interface AuthProps {
   onLogin: (role: 'user' | 'admin') => void;
-  users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
 }
 
-const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
+const Auth: React.FC<AuthProps> = ({ onLogin, setUsers }) => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
@@ -34,19 +33,22 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
         return;
       }
 
-      // User Login Check
-      const foundUser = users.find(u => u.email === formData.email && u.password === formData.password);
+      // We need to check against the current state of users from App
+      // This will be handled via a callback if needed, but for now we look at localStorage 
+      // as a fallback or simply let App.tsx handle validation if it was more complex.
+      const savedUsers = JSON.parse(localStorage.getItem('mbjks_users') || '[]');
+      const foundUser = savedUsers.find((u: User) => u.email === formData.email && u.password === formData.password);
       
       if (!foundUser) {
         setError('ভুল ইমেইল অথবা পাসওয়ার্ড!');
       } else if (foundUser.status === 'pending') {
         setError('আপনার একাউন্টটি এখনও পেন্ডিং আছে। এডমিন অ্যাপ্রুভ করলে লগইন করতে পারবেন।');
       } else {
-        onLogin('user');
+        onLogin(foundUser.role);
       }
     } else {
-      // Registration Check
-      if (users.some(u => u.email === formData.email)) {
+      const savedUsers = JSON.parse(localStorage.getItem('mbjks_users') || '[]');
+      if (savedUsers.some((u: User) => u.email === formData.email)) {
         setError('এই ইমেইল দিয়ে ইতিপূর্বেই একাউন্ট খোলা হয়েছে।');
         return;
       }
@@ -61,7 +63,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
         role: 'user'
       };
 
-      setUsers([...users, newUser]);
+      // CRITICAL: Use functional update to ensure we don't overwrite other new users
+      setUsers(prevUsers => [...prevUsers, newUser]);
+      
       setSuccess('রেজিস্ট্রেশন সফল হয়েছে! এডমিন আপনার তথ্য যাচাই করে অ্যাপ্রুভ করলে আপনি লগইন করতে পারবেন।');
       setIsLoginView(true);
       setFormData({ name: '', email: '', phone: '', password: '' });

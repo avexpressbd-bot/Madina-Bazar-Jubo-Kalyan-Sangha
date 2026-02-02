@@ -37,7 +37,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   footerData, setFooterData,
   aboutData, setAboutData
 }) => {
-  const [activeTab, setActiveTab] = useState<'posts' | 'notices' | 'members' | 'committee' | 'gallery' | 'cricket_stats' | 'about_edit' | 'site_settings' | 'requests'>('posts');
+  const pendingRequests = users.filter(u => u.status === 'pending');
+  
+  // Auto-switch to requests if there are pending ones
+  const [activeTab, setActiveTab] = useState<'posts' | 'notices' | 'members' | 'committee' | 'gallery' | 'cricket_stats' | 'about_edit' | 'site_settings' | 'requests'>(
+    pendingRequests.length > 0 ? 'requests' : 'posts'
+  );
   
   // Site Settings States
   const [siteHero, setSiteHero] = useState(footerData.heroImageUrl);
@@ -135,7 +140,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     alert('সাইট সেটিংস আপডেট করা হয়েছে!');
   };
 
-  const pendingRequests = users.filter(u => u.status === 'pending');
+  const handleApproveUser = (id: string) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, status: 'approved' } : u));
+  };
+
+  const handleRejectUser = (id: string) => {
+    setUsers(prev => prev.filter(u => u.id !== id));
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fadeIn">
@@ -161,12 +172,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {id: 'cricket_stats', label: 'ক্রিকেট'},
                 {id: 'about_edit', label: 'এবাউট'},
                 {id: 'site_settings', label: 'সাইট'},
-                {id: 'requests', label: `আবেদন (${pendingRequests.length})`}
+                {id: 'requests', label: `আবেদন (${pendingRequests.length})`, highlight: pendingRequests.length > 0}
               ].map(tab => (
                 <button 
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-lg' : tab.highlight ? 'text-red-400 bg-red-500/10 mr-1' : 'text-slate-400 hover:text-white'}`}
                 >
                   {tab.label}
                 </button>
@@ -326,7 +337,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* Other tabs remain similar with their CRUD logic */}
+          {/* Other tabs */}
           {(activeTab === 'posts' || activeTab === 'notices' || activeTab === 'members' || activeTab === 'committee' || activeTab === 'gallery') && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 h-fit">
@@ -393,15 +404,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </div>
                         </div>
                     ))}
-                    {activeTab === 'members' && members.map(m => (
-                        <div key={m.id} className="bg-white p-4 border rounded-2xl flex justify-between items-center shadow-sm">
-                            <p className="truncate pr-4 flex-1">{m.name} - <span className="text-xs text-blue-600 font-bold uppercase">{m.role}</span></p>
-                            <div className="flex gap-2">
-                                <button onClick={() => {setInput1(m.name); setInput2(m.role); setInput3(m.phone); setInput4(m.image); setEditingId(m.id)}} className="text-blue-600 p-2"><i className="fas fa-edit"></i></button>
-                                <button onClick={() => setMembers(members.filter(x => x.id !== m.id))} className="text-red-500 p-2"><i className="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                    ))}
                 </div>
             </div>
           )}
@@ -409,18 +411,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'requests' && (
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {pendingRequests.map(u => (
-                  <div key={u.id} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col justify-between">
+                  <div key={u.id} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col justify-between animate-fadeIn">
                     <div>
-                        <h4 className="font-bold text-lg">{u.name}</h4>
-                        <p className="text-sm text-slate-500 mb-4">{u.email} | {u.phone}</p>
+                        <div className="flex items-center mb-4">
+                           <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold mr-3">{u.name[0]}</div>
+                           <h4 className="font-bold text-lg">{u.name}</h4>
+                        </div>
+                        <p className="text-sm text-slate-500 mb-1 flex items-center"><i className="fas fa-envelope mr-2 w-4"></i> {u.email}</p>
+                        <p className="text-sm text-slate-500 mb-4 flex items-center"><i className="fas fa-phone mr-2 w-4"></i> {u.phone}</p>
                     </div>
                     <div className="flex gap-3 mt-4">
-                        <button onClick={() => setUsers(users.map(x => x.id === u.id ? {...x, status: 'approved'} : x))} className="flex-1 bg-green-600 text-white py-2 rounded-xl font-bold transition-transform active:scale-95 shadow-md">অ্যাপ্রুভ</button>
-                        <button onClick={() => setUsers(users.filter(x => x.id !== u.id))} className="flex-1 bg-white border-2 border-red-500 text-red-500 py-2 rounded-xl font-bold transition-transform active:scale-95">বাতিল</button>
+                        <button onClick={() => handleApproveUser(u.id)} className="flex-1 bg-green-600 text-white py-2 rounded-xl font-bold transition-transform active:scale-95 shadow-md hover:bg-green-700">অ্যাপ্রুভ</button>
+                        <button onClick={() => handleRejectUser(u.id)} className="flex-1 bg-white border-2 border-red-500 text-red-500 py-2 rounded-xl font-bold transition-transform active:scale-95 hover:bg-red-50">বাতিল</button>
                     </div>
                   </div>
                 ))}
-                {pendingRequests.length === 0 && <p className="col-span-full text-center py-20 text-slate-400 italic">কোনো পেন্ডিং আবেদন নেই</p>}
+                {pendingRequests.length === 0 && <div className="col-span-full text-center py-20 text-slate-400 italic">কোনো পেন্ডিং আবেদন নেই</div>}
              </div>
           )}
         </div>

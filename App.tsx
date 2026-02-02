@@ -44,7 +44,6 @@ const App: React.FC = () => {
 
   const [footerData, setFooterData] = useState<FooterData>(() => {
     const saved = loadState('mbjks_footer', null);
-    // Merge defaults with saved state to prevent missing properties
     return saved ? { ...defaultFooter, ...saved } : defaultFooter;
   });
 
@@ -120,7 +119,7 @@ const App: React.FC = () => {
       case 'notice': return <NoticeBoard notices={notices} />;
       case 'contact': return <Contact footerData={footerData} />;
       case 'cricket': return <CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} />;
-      case 'auth': return <Auth onLogin={(role) => { setIsLoggedIn(true); setIsAdmin(role === 'admin'); setCurrentView(role === 'admin' ? 'admin' : 'home'); }} users={users} setUsers={setUsers} />;
+      case 'auth': return <Auth onLogin={(role) => { setIsLoggedIn(true); setIsAdmin(role === 'admin'); setCurrentView(role === 'admin' ? 'admin' : 'home'); }} setUsers={setUsers} />;
       case 'admin': 
         if (!isAdmin) return null;
         return <AdminDashboard 
@@ -141,7 +140,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar currentView={currentView} setView={setCurrentView} isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} />
+      <Navbar currentView={currentView} setView={setCurrentView} isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} users={users} />
       <main className="flex-grow pt-16">{renderView()}</main>
       <Footer setView={setCurrentView} footerData={footerData} />
     </div>

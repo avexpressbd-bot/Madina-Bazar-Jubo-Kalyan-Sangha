@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { View } from '../types';
+import { View, User } from '../types';
 
 interface NavbarProps {
   currentView: View;
@@ -8,10 +8,13 @@ interface NavbarProps {
   isLoggedIn: boolean;
   isAdmin: boolean;
   onLogout: () => void;
+  users: User[];
 }
 
-const Navbar: React.FC<NavbarProps> = ({ currentView, setView, isLoggedIn, isAdmin, onLogout }) => {
+const Navbar: React.FC<NavbarProps> = ({ currentView, setView, isLoggedIn, isAdmin, onLogout, users }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  const pendingCount = users.filter(u => u.status === 'pending').length;
 
   const navLinks: { label: string; view: View }[] = [
     { label: 'হোম', view: 'home' },
@@ -50,9 +53,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, setView, isLoggedIn, isAdm
             {isAdmin && (
               <button
                 onClick={() => setView('admin')}
-                className={`px-3 py-2 rounded-md text-sm font-medium bg-orange-500 hover:bg-orange-600 ${currentView === 'admin' ? 'ring-2 ring-white' : ''}`}
+                className={`relative px-3 py-2 rounded-md text-sm font-medium bg-orange-500 hover:bg-orange-600 transition-all ${currentView === 'admin' ? 'ring-2 ring-white' : ''}`}
               >
                 ড্যাশবোর্ড
+                {pendingCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white animate-bounce shadow-lg">
+                    {pendingCount}
+                  </span>
+                )}
               </button>
             )}
 
@@ -105,9 +113,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, setView, isLoggedIn, isAdm
                 setView('admin');
                 setIsMenuOpen(false);
               }}
-              className="block w-full text-left px-3 py-3 text-base font-medium text-orange-400"
+              className="relative block w-full text-left px-3 py-3 text-base font-medium text-orange-400"
             >
               এডমিন ড্যাশবোর্ড
+              {pendingCount > 0 && (
+                <span className="ml-2 inline-flex bg-red-600 text-white text-[10px] w-5 h-5 items-center justify-center rounded-full">
+                  {pendingCount}
+                </span>
+              )}
             </button>
           )}
           {!isLoggedIn ? (
