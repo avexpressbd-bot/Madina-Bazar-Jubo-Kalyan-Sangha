@@ -4,10 +4,11 @@ import { User } from '../types';
 
 interface AuthProps {
   onLogin: (role: 'user' | 'admin') => void;
+  users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
 }
 
-const Auth: React.FC<AuthProps> = ({ onLogin, setUsers }) => {
+const Auth: React.FC<AuthProps> = ({ onLogin, users, setUsers }) => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
@@ -33,11 +34,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, setUsers }) => {
         return;
       }
 
-      // We need to check against the current state of users from App
-      // This will be handled via a callback if needed, but for now we look at localStorage 
-      // as a fallback or simply let App.tsx handle validation if it was more complex.
-      const savedUsers = JSON.parse(localStorage.getItem('mbjks_users') || '[]');
-      const foundUser = savedUsers.find((u: User) => u.email === formData.email && u.password === formData.password);
+      // Check against the users prop (current state)
+      const foundUser = users.find((u: User) => u.email === formData.email && u.password === formData.password);
       
       if (!foundUser) {
         setError('ভুল ইমেইল অথবা পাসওয়ার্ড!');
@@ -47,8 +45,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, setUsers }) => {
         onLogin(foundUser.role);
       }
     } else {
-      const savedUsers = JSON.parse(localStorage.getItem('mbjks_users') || '[]');
-      if (savedUsers.some((u: User) => u.email === formData.email)) {
+      // Registration Logic
+      if (users.some((u: User) => u.email === formData.email)) {
         setError('এই ইমেইল দিয়ে ইতিপূর্বেই একাউন্ট খোলা হয়েছে।');
         return;
       }
@@ -63,12 +61,15 @@ const Auth: React.FC<AuthProps> = ({ onLogin, setUsers }) => {
         role: 'user'
       };
 
-      // CRITICAL: Use functional update to ensure we don't overwrite other new users
+      // Update the global state
       setUsers(prevUsers => [...prevUsers, newUser]);
       
-      setSuccess('রেজিস্ট্রেশন সফল হয়েছে! এডমিন আপনার তথ্য যাচাই করে অ্যাপ্রুভ করলে আপনি লগইন করতে পারবেন।');
-      setIsLoginView(true);
-      setFormData({ name: '', email: '', phone: '', password: '' });
+      setSuccess('রেজিস্ট্রেশন আবেদন জমা হয়েছে! এডমিন অ্যাপ্রুভ করলে আপনি লগইন করতে পারবেন।');
+      setTimeout(() => {
+        setIsLoginView(true);
+        setFormData({ name: '', email: '', phone: '', password: '' });
+        setSuccess('');
+      }, 3000);
     }
   };
 
@@ -86,7 +87,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, setUsers }) => {
         
         <form className="p-8 space-y-5" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs font-bold border border-red-100 flex items-center">
+            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs font-bold border border-red-100 flex items-center animate-shake">
               <i className="fas fa-exclamation-circle mr-2"></i>
               {error}
             </div>
@@ -155,7 +156,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, setUsers }) => {
 
           <button 
             type="submit" 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform active:scale-95"
           >
             {isLoginView ? 'লগইন করুন' : 'রেজিস্ট্রেশনের জন্য আবেদন করুন'}
           </button>

@@ -119,7 +119,7 @@ const App: React.FC = () => {
       case 'notice': return <NoticeBoard notices={notices} />;
       case 'contact': return <Contact footerData={footerData} />;
       case 'cricket': return <CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} />;
-      case 'auth': return <Auth onLogin={(role) => { setIsLoggedIn(true); setIsAdmin(role === 'admin'); setCurrentView(role === 'admin' ? 'admin' : 'home'); }} setUsers={setUsers} />;
+      case 'auth': return <Auth onLogin={(role) => { setIsLoggedIn(true); setIsAdmin(role === 'admin'); setCurrentView(role === 'admin' ? 'admin' : 'home'); }} users={users} setUsers={setUsers} />;
       case 'admin': 
         if (!isAdmin) return null;
         return <AdminDashboard 
