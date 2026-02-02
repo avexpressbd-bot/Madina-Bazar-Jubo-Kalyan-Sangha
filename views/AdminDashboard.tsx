@@ -119,8 +119,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const pendingUsers = users.filter(u => u.status === 'pending');
 
   const handleApproveUser = (userId: string) => {
+    const userToApprove = users.find(u => u.id === userId);
+    if (!userToApprove) return;
+
+    // 1. Update User Status to approved
     setUsers(users.map(u => u.id === userId ? { ...u, status: 'approved' } : u));
-    alert('মেম্বার অনুমোদিত হয়েছে!');
+
+    // 2. Automatically add to Member List so it's visible to public
+    const newMember: Member = {
+      id: userToApprove.id,
+      name: userToApprove.name,
+      phone: userToApprove.phone,
+      role: 'সাধারণ সদস্য',
+      image: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' // Default image
+    };
+
+    setMembers([...members, newMember]);
+    
+    alert(`${userToApprove.name}-কে সফলভাবে অনুমোদন করা হয়েছে এবং মেম্বার লিস্টে যুক্ত করা হয়েছে!`);
   };
 
   const handleRejectUser = (userId: string) => {
@@ -140,7 +156,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'people', label: 'মেম্বার ও কমিটি', icon: 'fa-users' },
             { id: 'gallery', label: 'গ্যালারি', icon: 'fa-images' },
             { id: 'cricket', label: 'ক্রিকেট হাব', icon: 'fa-bat-ball' },
-            { id: 'site_settings', label: 'সাইট সেটিংস', icon: 'fa-cog' },
+            { id: 'site_settings', label: 'সাইট সেটিিংস', icon: 'fa-cog' },
           ].map(tab => (
             <button 
               key={tab.id}
@@ -369,7 +385,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-xs font-bold uppercase mb-2">বছর</label>
-                    <input className="w-full p-3 rounded-xl border" value={cricketStats.year} onChange={e => handleUpdateCricket('year', e.target.value)} />
+                    <input className="w-full p-3 rounded-xl border" value={cricketStats.year} onChange={e => handleUpdateCricket('year', e.value)} />
                   </div>
                   <div>
                     <label className="block text-xs font-bold uppercase mb-2">বিজয়ী দল</label>
