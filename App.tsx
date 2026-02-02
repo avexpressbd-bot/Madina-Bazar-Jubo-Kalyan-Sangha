@@ -29,6 +29,16 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(() => loadState('mbjks_isAdmin', false));
   const [users, setUsers] = useState<User[]>(() => loadState('mbjks_users', []));
   const [posts, setPosts] = useState<Post[]>(() => loadState('mbjks_posts', []));
+  const [members, setMembers] = useState<Member[]>(() => loadState('mbjks_members', [
+    { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সভাপতি', image: 'https://picsum.photos/seed/p1/200/200' },
+  ]));
+  const [committee, setCommittee] = useState<Member[]>(() => loadState('mbjks_committee', [
+    { id: 'c1', name: 'মোঃ করিম উদ্দিন', role: 'সভাপতি', phone: '01711223344', image: 'https://picsum.photos/seed/c1/300/300' },
+    { id: 'c2', name: 'আব্দুল হামিদ', role: 'সাধারণ সম্পাদক', phone: '01811223344', image: 'https://picsum.photos/seed/c2/300/300' },
+  ]));
+  const [notices, setNotices] = useState<Notice[]>(() => loadState('mbjks_notices', []));
+  const [gallery, setGallery] = useState<GalleryImage[]>(() => loadState('mbjks_gallery', []));
+  const [upcomingTeams, setUpcomingTeams] = useState<Team[]>(() => loadState('mbjks_upcomingTeams', []));
 
   const defaultFooter: FooterData = {
     heroImageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=2000',
@@ -64,18 +74,6 @@ const App: React.FC = () => {
     return saved ? { ...defaultAbout, ...saved } : defaultAbout;
   });
 
-  const [members, setMembers] = useState<Member[]>(() => loadState('mbjks_members', [
-    { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সভাপতি', image: 'https://picsum.photos/seed/p1/200/200' },
-  ]));
-
-  const [committee, setCommittee] = useState<Member[]>(() => loadState('mbjks_committee', [
-    { id: 'c1', name: 'মোঃ করিম উদ্দিন', role: 'সভাপতি', phone: '01711223344', image: 'https://picsum.photos/seed/c1/300/300' },
-    { id: 'c2', name: 'আব্দুল হামিদ', role: 'সাধারণ সম্পাদক', phone: '01811223344', image: 'https://picsum.photos/seed/c2/300/300' },
-  ]));
-
-  const [notices, setNotices] = useState<Notice[]>(() => loadState('mbjks_notices', []));
-  const [gallery, setGallery] = useState<GalleryImage[]>(() => loadState('mbjks_gallery', []));
-
   const [cricketStats, setCricketStats] = useState<TournamentStats>(() => loadState('mbjks_cricketStats', {
     year: '২০২৩',
     winner: 'মদিনা বাজার রাইডার্স',
@@ -85,8 +83,25 @@ const App: React.FC = () => {
     participatingTeams: ['রাইডার্স', 'স্পার্টানস', 'টাইটানস', 'ওয়ারিয়র্স']
   }));
 
-  const [upcomingTeams, setUpcomingTeams] = useState<Team[]>(() => loadState('mbjks_upcomingTeams', []));
+  // Sync state across tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'mbjks_posts') setPosts(JSON.parse(e.newValue || '[]'));
+      if (e.key === 'mbjks_members') setMembers(JSON.parse(e.newValue || '[]'));
+      if (e.key === 'mbjks_committee') setCommittee(JSON.parse(e.newValue || '[]'));
+      if (e.key === 'mbjks_notices') setNotices(JSON.parse(e.newValue || '[]'));
+      if (e.key === 'mbjks_gallery') setGallery(JSON.parse(e.newValue || '[]'));
+      if (e.key === 'mbjks_cricketStats') setCricketStats(JSON.parse(e.newValue || 'null'));
+      if (e.key === 'mbjks_footer') setFooterData(JSON.parse(e.newValue || 'null'));
+      if (e.key === 'mbjks_about') setAboutData(JSON.parse(e.newValue || 'null'));
+      if (e.key === 'mbjks_users') setUsers(JSON.parse(e.newValue || '[]'));
+    };
 
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Save to LocalStorage whenever state changes
   useEffect(() => {
     localStorage.setItem('mbjks_currentView', JSON.stringify(currentView));
     localStorage.setItem('mbjks_isLoggedIn', JSON.stringify(isLoggedIn));
