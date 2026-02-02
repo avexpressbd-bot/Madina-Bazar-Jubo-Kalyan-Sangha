@@ -60,6 +60,8 @@ export interface Team {
   id: string;
   name: string;
   logo: string;
+  captainName?: string;
+  captainImage?: string;
   players: string[];
 }
 

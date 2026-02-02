@@ -131,7 +131,7 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case 'home': return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} />;
+      case 'home': return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} upcomingTeams={upcomingTeams} />;
       case 'about': return <About data={aboutData} />;
       case 'members': return <Members members={members} />;
       case 'committee': return <Committee members={committee} />;
@@ -150,7 +150,7 @@ const App: React.FC = () => {
           upcomingTeams={upcomingTeams} cricketStats={cricketStats} users={users} posts={posts}
           footerData={footerData} aboutData={aboutData}
         />;
-      default: return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} />;
+      default: return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} upcomingTeams={upcomingTeams} />;
     }
   };
 
