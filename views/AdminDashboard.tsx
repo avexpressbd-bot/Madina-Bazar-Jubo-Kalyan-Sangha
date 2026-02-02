@@ -35,7 +35,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Local states for forms
   const [newPost, setNewPost] = useState({ content: '', mediaUrl: '', mediaType: 'none' as any });
   const [newNotice, setNewNotice] = useState({ title: '', description: '', videoUrl: '' });
+  
+  // Person editing state
+  const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
   const [newPerson, setNewPerson] = useState({ name: '', role: '', phone: '', image: '', type: 'member' });
+  
   const [newGallery, setNewGallery] = useState({ url: '', caption: '' });
 
   const handleAddPost = () => {
@@ -66,10 +70,59 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  const startEditPerson = (p: Member, type: 'member' | 'committee') => {
+    setEditingPersonId(p.id);
+    setNewPerson({
+      name: p.name,
+      role: p.role,
+      phone: p.phone,
+      image: p.image,
+      type: type
+    });
+    // Scroll to top of form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelPersonEdit = () => {
+    setEditingPersonId(null);
+    setNewPerson({ name: '', role: '', phone: '', image: '', type: 'member' });
+  };
+
+  const handlePersonSubmit = () => {
+    if(!newPerson.name) return alert('নাম আবশ্যক');
+
+    if (editingPersonId) {
+      // Update Logic
+      const updatedPerson = { ...newPerson, id: editingPersonId };
+      if (newPerson.type === 'member') {
+        // If type changed from committee to member or vice-versa
+        setCommittee(committee.filter(c => c.id !== editingPersonId));
+        setMembers(members.map(m => m.id === editingPersonId ? updatedPerson : m));
+        if (!members.find(m => m.id === editingPersonId)) {
+          setMembers([...members, updatedPerson]);
+        }
+      } else {
+        setMembers(members.filter(m => m.id !== editingPersonId));
+        setCommittee(committee.map(c => c.id === editingPersonId ? updatedPerson : c));
+        if (!committee.find(c => c.id === editingPersonId)) {
+          setCommittee([...committee, updatedPerson]);
+        }
+      }
+      alert('তথ্য আপডেট করা হয়েছে');
+    } else {
+      // Add Logic
+      const p = { ...newPerson, id: Date.now().toString() };
+      if(newPerson.type === 'member') setMembers([...members, p]);
+      else setCommittee([...committee, p]);
+      alert('সফলভাবে যোগ করা হয়েছে');
+    }
+    
+    cancelPersonEdit();
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fadeIn">
       <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
-        {/* Navigation Sidebar/Header */}
         <div className="bg-slate-900 px-6 py-4 flex flex-wrap gap-2 justify-center lg:justify-start">
           {[
             { id: 'feed', label: 'পোস্ট ফিড', icon: 'fa-rss' },
@@ -182,7 +235,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* SITE SETTINGS (ABOUT & FOOTER) */}
+          {/* SITE SETTINGS */}
           {activeTab === 'site_settings' && (
             <div className="space-y-12">
               <div className="bg-slate-50 p-8 rounded-[2.5rem]">
@@ -272,49 +325,95 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* OTHER TABS (PEOPLE/GALLERY) would follow similar patterns */}
+          {/* PEOPLE (MEMBERS & COMMITTEE) */}
           {activeTab === 'people' && (
              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div className="bg-slate-50 p-6 rounded-3xl">
-                  <h3 className="font-bold mb-6">নতুন মেম্বার/কমিটি মেম্বার যোগ</h3>
+                <div className="bg-slate-50 p-6 rounded-3xl h-fit sticky top-20">
+                  <h3 className="font-bold mb-6 text-blue-600">
+                    {editingPersonId ? <><i className="fas fa-edit mr-2"></i> তথ্য আপডেট করুন</> : <><i className="fas fa-plus-circle mr-2"></i> নতুন মেম্বার যোগ</>}
+                  </h3>
                   <div className="space-y-4">
-                    <input className="w-full p-3 rounded-xl border" placeholder="নাম" value={newPerson.name} onChange={e => setNewPerson({...newPerson, name: e.target.value})} />
-                    <input className="w-full p-3 rounded-xl border" placeholder="পদবী" value={newPerson.role} onChange={e => setNewPerson({...newPerson, role: e.target.value})} />
-                    <input className="w-full p-3 rounded-xl border" placeholder="মোবাইল" value={newPerson.phone} onChange={e => setNewPerson({...newPerson, phone: e.target.value})} />
-                    <input className="w-full p-3 rounded-xl border" placeholder="ছবির URL" value={newPerson.image} onChange={e => setNewPerson({...newPerson, image: e.target.value})} />
-                    <select className="w-full p-3 rounded-xl border" value={newPerson.type} onChange={e => setNewPerson({...newPerson, type: e.target.value})}>
-                      <option value="member">সাধারণ মেম্বার</option>
-                      <option value="committee">কমিটি মেম্বার</option>
-                    </select>
-                    <button 
-                      onClick={() => {
-                        if(!newPerson.name) return;
-                        const p = { ...newPerson, id: Date.now().toString() };
-                        if(newPerson.type === 'member') setMembers([...members, p]);
-                        else setCommittee([...committee, p]);
-                        setNewPerson({name: '', role: '', phone: '', image: '', type: 'member'});
-                        alert('সফলভাবে যোগ করা হয়েছে');
-                      }}
-                      className="w-full bg-green-600 text-white font-bold py-3 rounded-xl"
-                    >
-                      সেভ করুন
-                    </button>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">নাম</label>
+                      <input className="w-full p-3 rounded-xl border focus:border-blue-500 outline-none" placeholder="সম্পূর্ণ নাম" value={newPerson.name} onChange={e => setNewPerson({...newPerson, name: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">পদবী</label>
+                      <input className="w-full p-3 rounded-xl border focus:border-blue-500 outline-none" placeholder="পদবী (যেমন: সভাপতি/সদস্য)" value={newPerson.role} onChange={e => setNewPerson({...newPerson, role: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">মোবাইল নম্বর</label>
+                      <input className="w-full p-3 rounded-xl border focus:border-blue-500 outline-none" placeholder="০১৭০০-০০০০০০" value={newPerson.phone} onChange={e => setNewPerson({...newPerson, phone: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">ছবির URL</label>
+                      <input className="w-full p-3 rounded-xl border focus:border-blue-500 outline-none" placeholder="https://..." value={newPerson.image} onChange={e => setNewPerson({...newPerson, image: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 mb-1">ধরন</label>
+                      <select className="w-full p-3 rounded-xl border focus:border-blue-500 outline-none" value={newPerson.type} onChange={e => setNewPerson({...newPerson, type: e.target.value})}>
+                        <option value="member">সাধারণ মেম্বার</option>
+                        <option value="committee">কমিটি মেম্বার</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={handlePersonSubmit}
+                        className={`flex-1 ${editingPersonId ? 'bg-blue-600' : 'bg-green-600'} text-white font-bold py-3 rounded-xl shadow-lg transition-all`}
+                      >
+                        {editingPersonId ? 'আপডেট করুন' : 'সেভ করুন'}
+                      </button>
+                      {editingPersonId && (
+                        <button 
+                          onClick={cancelPersonEdit}
+                          className="px-6 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl"
+                        >
+                          বাতিল
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-4 max-h-[500px] overflow-y-auto no-scrollbar">
-                  <h4 className="font-bold text-slate-400">বর্তমান মেম্বার ও কমিটি</h4>
-                  {[...committee, ...members].map(m => (
-                    <div key={m.id} className="p-3 bg-white border rounded-xl flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <img src={m.image} className="w-8 h-8 rounded-full object-cover" />
-                        <span className="text-sm font-medium">{m.name} ({m.role})</span>
+
+                <div className="space-y-4 max-h-[700px] overflow-y-auto no-scrollbar">
+                  <h4 className="font-bold text-slate-400 uppercase text-xs tracking-widest mb-4">বর্তমান মেম্বার ও কমিটি ({members.length + committee.length})</h4>
+                  
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">কমিটি মেম্বারগণ</p>
+                    {committee.map(m => (
+                      <div key={m.id} className={`p-4 bg-white border rounded-2xl flex items-center justify-between group transition-all ${editingPersonId === m.id ? 'ring-2 ring-blue-400 bg-blue-50' : ''}`}>
+                        <div className="flex items-center gap-4">
+                          <img src={m.image} className="w-12 h-12 rounded-2xl object-cover shadow-sm" alt={m.name} />
+                          <div>
+                            <p className="font-bold text-slate-800 leading-none mb-1">{m.name}</p>
+                            <p className="text-[10px] text-blue-600 font-bold uppercase">{m.role}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => startEditPerson(m, 'committee')} className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all"><i className="fas fa-edit text-xs"></i></button>
+                          <button onClick={() => {if(window.confirm('ডিলিট করবেন?')) setCommittee(committee.filter(item => item.id !== m.id))}} className="w-8 h-8 bg-red-50 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><i className="fas fa-trash-alt text-xs"></i></button>
+                        </div>
                       </div>
-                      <button onClick={() => {
-                        setMembers(members.filter(item => item.id !== m.id));
-                        setCommittee(committee.filter(item => item.id !== m.id));
-                      }} className="text-red-400"><i className="fas fa-trash-can"></i></button>
-                    </div>
-                  ))}
+                    ))}
+
+                    <div className="pt-4"></div>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">সাধারণ মেম্বারগণ</p>
+                    {members.map(m => (
+                      <div key={m.id} className={`p-4 bg-white border rounded-2xl flex items-center justify-between group transition-all ${editingPersonId === m.id ? 'ring-2 ring-blue-400 bg-blue-50' : ''}`}>
+                        <div className="flex items-center gap-4">
+                          <img src={m.image} className="w-12 h-12 rounded-2xl object-cover shadow-sm" alt={m.name} />
+                          <div>
+                            <p className="font-bold text-slate-800 leading-none mb-1">{m.name}</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase">{m.role || 'মেম্বার'}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => startEditPerson(m, 'member')} className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all"><i className="fas fa-edit text-xs"></i></button>
+                          <button onClick={() => {if(window.confirm('ডিলিট করবেন?')) setMembers(members.filter(item => item.id !== m.id))}} className="w-8 h-8 bg-red-50 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><i className="fas fa-trash-alt text-xs"></i></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
              </div>
           )}
