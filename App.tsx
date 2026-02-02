@@ -16,7 +16,6 @@ import { db, ref, onValue } from './firebase';
 import { View, Member, Notice, TournamentStats, Team, GalleryImage, User, Post, FooterData, AboutData } from './types';
 
 const App: React.FC = () => {
-  // Navigation & Auth state (Loaded from LocalStorage to persist on refresh)
   const [currentView, setCurrentView] = useState<View>(() => {
     return (localStorage.getItem('mbjks_currentView') as View) || 'home';
   });
@@ -27,7 +26,6 @@ const App: React.FC = () => {
     return localStorage.getItem('mbjks_isAdmin') === 'true';
   });
   
-  // App Data State (Will be synced with Firebase)
   const [users, setUsers] = useState<User[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -35,6 +33,7 @@ const App: React.FC = () => {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [gallery, setGallery] = useState<GalleryImage[]>([]);
   const [upcomingTeams, setUpcomingTeams] = useState<Team[]>([]);
+  
   const [footerData, setFooterData] = useState<FooterData>({
     heroImageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=2000',
     urgentNews: 'স্বাগতম! মদিনা বাজার যুব কল্যাণ সংঘের নতুন ওয়েবসাইট এখন লাইভ।',
@@ -44,12 +43,14 @@ const App: React.FC = () => {
     email: 'info@mbjks.org',
     facebook: '#', youtube: '#', instagram: '#'
   });
+
   const [aboutData, setAboutData] = useState<AboutData>({
     description: 'মদিনা বাজার যুব কল্যাণ সংঘ একটি অরাজনৈতিক ও সেবামূলক সংগঠন।',
     mission: 'সুশিক্ষিত ও আদর্শ যুব সমাজ গড়ে তোলা।',
     vision: 'মাদক মুক্ত সমাজ গঠন।',
     stats: [{ label: 'সাফল্যের বছর', count: '১০+' }]
   });
+
   const [cricketStats, setCricketStats] = useState<TournamentStats>({
     year: '২০২৪', winner: '-', runnerUp: '-',
     topScorer: { name: '-', runs: 0, image: 'https://picsum.photos/seed/cs1/200/200' },
@@ -57,53 +58,61 @@ const App: React.FC = () => {
     participatingTeams: []
   });
 
-  // Persist State Changes
   useEffect(() => {
     localStorage.setItem('mbjks_isLoggedIn', String(isLoggedIn));
     localStorage.setItem('mbjks_isAdmin', String(isAdmin));
     localStorage.setItem('mbjks_currentView', currentView);
   }, [isLoggedIn, isAdmin, currentView]);
 
-  // Sync with Firebase Real-time Database
   useEffect(() => {
-    const refs = {
-      users: ref(db, 'users'),
-      posts: ref(db, 'posts'),
-      members: ref(db, 'members'),
-      committee: ref(db, 'committee'),
-      notices: ref(db, 'notices'),
-      gallery: ref(db, 'gallery'),
-      upcomingTeams: ref(db, 'upcomingTeams'),
-      footerData: ref(db, 'footerData'),
-      aboutData: ref(db, 'aboutData'),
-      cricketStats: ref(db, 'cricketStats'),
+    if (!db) return;
+
+    const dataPaths = {
+      users: 'users',
+      posts: 'posts',
+      members: 'members',
+      committee: 'committee',
+      notices: 'notices',
+      gallery: 'gallery',
+      upcomingTeams: 'upcomingTeams',
+      footerData: 'footerData',
+      aboutData: 'aboutData',
+      cricketStats: 'cricketStats',
     };
 
-    const unsubscribers = Object.entries(refs).map(([key, dbRef]) => {
-      return onValue(dbRef, (snapshot) => {
+    const unsubscribers = Object.entries(dataPaths).map(([key, path]) => {
+      return onValue(ref(db, path), (snapshot) => {
         const data = snapshot.val();
-        
-        // Handle collections (Arrays) vs Objects
-        const isObjectCollection = !['footerData', 'aboutData', 'cricketStats'].includes(key);
-        let formattedData: any;
+        const isCollection = !['footerData', 'aboutData', 'cricketStats'].includes(key);
 
-        if (data) {
-          formattedData = isObjectCollection ? Object.values(data) : data;
-        } else {
-          formattedData = isObjectCollection ? [] : (key === 'cricketStats' ? cricketStats : (key === 'aboutData' ? aboutData : footerData));
+        if (!data) {
+          if (isCollection) {
+            switch(key) {
+              case 'users': setUsers([]); break;
+              case 'posts': setPosts([]); break;
+              case 'members': setMembers([]); break;
+              case 'committee': setCommittee([]); break;
+              case 'notices': setNotices([]); break;
+              case 'gallery': setGallery([]); break;
+              case 'upcomingTeams': setUpcomingTeams([]); break;
+            }
+          }
+          return;
         }
-          
+
+        const formatted = isCollection ? Object.values(data) : data;
+
         switch(key) {
-          case 'users': setUsers(formattedData as User[]); break;
-          case 'posts': setPosts((formattedData as Post[]).reverse()); break;
-          case 'members': setMembers(formattedData as Member[]); break;
-          case 'committee': setCommittee(formattedData as Member[]); break;
-          case 'notices': setNotices(formattedData as Notice[]); break;
-          case 'gallery': setGallery(formattedData as GalleryImage[]); break;
-          case 'upcomingTeams': setUpcomingTeams(formattedData as Team[]); break;
-          case 'footerData': setFooterData(formattedData as FooterData); break;
-          case 'aboutData': setAboutData(formattedData as AboutData); break;
-          case 'cricketStats': setCricketStats(formattedData as TournamentStats); break;
+          case 'users': setUsers(formatted as User[]); break;
+          case 'posts': setPosts((formatted as Post[]).sort((a, b) => b.id.localeCompare(a.id))); break;
+          case 'members': setMembers(formatted as Member[]); break;
+          case 'committee': setCommittee(formatted as Member[]); break;
+          case 'notices': setNotices(formatted as Notice[]); break;
+          case 'gallery': setGallery(formatted as GalleryImage[]); break;
+          case 'upcomingTeams': setUpcomingTeams(formatted as Team[]); break;
+          case 'footerData': setFooterData(formatted as FooterData); break;
+          case 'aboutData': setAboutData(formatted as AboutData); break;
+          case 'cricketStats': setCricketStats(formatted as TournamentStats); break;
         }
       });
     });
@@ -115,8 +124,7 @@ const App: React.FC = () => {
     setIsLoggedIn(false);
     setIsAdmin(false);
     setCurrentView('home');
-    localStorage.removeItem('mbjks_isLoggedIn');
-    localStorage.removeItem('mbjks_isAdmin');
+    localStorage.clear();
   };
 
   const renderView = () => {
