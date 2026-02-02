@@ -15,20 +15,22 @@ import AdminDashboard from './views/AdminDashboard';
 import { View, Member, Notice, TournamentStats, Team, GalleryImage, User } from './types';
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<View>('home');
-  
   // Helper to load from localStorage
   const loadState = (key: string, defaultValue: any) => {
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : defaultValue;
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : defaultValue;
+    } catch (e) {
+      return defaultValue;
+    }
   };
 
-  // Auth States
+  // State Management
+  const [currentView, setCurrentView] = useState<View>(() => loadState('mbjks_currentView', 'home'));
   const [isLoggedIn, setIsLoggedIn] = useState(() => loadState('mbjks_isLoggedIn', false));
   const [isAdmin, setIsAdmin] = useState(() => loadState('mbjks_isAdmin', false));
   const [users, setUsers] = useState<User[]>(() => loadState('mbjks_users', []));
 
-  // Content States
   const [members, setMembers] = useState<Member[]>(() => loadState('mbjks_members', [
     { id: '1', name: 'মোঃ করিম উদ্দিন', phone: '01711223344', role: 'সাধারণ মেম্বার', image: 'https://picsum.photos/seed/p1/200/200' },
   ]));
@@ -58,8 +60,9 @@ const App: React.FC = () => {
 
   const [upcomingTeams, setUpcomingTeams] = useState<Team[]>(() => loadState('mbjks_upcomingTeams', []));
 
-  // Save to localStorage whenever states change
+  // Single effect to sync all states to localStorage
   useEffect(() => {
+    localStorage.setItem('mbjks_currentView', JSON.stringify(currentView));
     localStorage.setItem('mbjks_isLoggedIn', JSON.stringify(isLoggedIn));
     localStorage.setItem('mbjks_isAdmin', JSON.stringify(isAdmin));
     localStorage.setItem('mbjks_users', JSON.stringify(users));
@@ -69,12 +72,12 @@ const App: React.FC = () => {
     localStorage.setItem('mbjks_gallery', JSON.stringify(gallery));
     localStorage.setItem('mbjks_cricketStats', JSON.stringify(cricketStats));
     localStorage.setItem('mbjks_upcomingTeams', JSON.stringify(upcomingTeams));
-  }, [isLoggedIn, isAdmin, users, members, committee, notices, gallery, cricketStats, upcomingTeams]);
+  }, [currentView, isLoggedIn, isAdmin, users, members, committee, notices, gallery, cricketStats, upcomingTeams]);
 
   const handleLogin = (role: 'user' | 'admin') => {
     setIsLoggedIn(true);
     setIsAdmin(role === 'admin');
-    setCurrentView('home');
+    setCurrentView(role === 'admin' ? 'admin' : 'home');
   };
 
   const handleLogout = () => {
@@ -94,15 +97,20 @@ const App: React.FC = () => {
       case 'contact': return <Contact />;
       case 'cricket': return <CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} />;
       case 'auth': return <Auth onLogin={handleLogin} users={users} setUsers={setUsers} />;
-      case 'admin': return <AdminDashboard 
-        members={members} setMembers={setMembers} 
-        committee={committee} setCommittee={setCommittee}
-        notices={notices} setNotices={setNotices}
-        gallery={gallery} setGallery={setGallery}
-        upcomingTeams={upcomingTeams} setUpcomingTeams={setUpcomingTeams}
-        cricketStats={cricketStats} setCricketStats={setCricketStats}
-        users={users} setUsers={setUsers}
-      />;
+      case 'admin': 
+        if (!isAdmin) {
+          setCurrentView('auth');
+          return null;
+        }
+        return <AdminDashboard 
+          members={members} setMembers={setMembers} 
+          committee={committee} setCommittee={setCommittee}
+          notices={notices} setNotices={setNotices}
+          gallery={gallery} setGallery={setGallery}
+          upcomingTeams={upcomingTeams} setUpcomingTeams={setUpcomingTeams}
+          cricketStats={cricketStats} setCricketStats={setCricketStats}
+          users={users} setUsers={setUsers}
+        />;
       default: return <Home setView={setCurrentView} />;
     }
   };

@@ -38,28 +38,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const resetInputs = () => { setInput1(''); setInput2(''); setInput3(''); setInput4(''); };
 
   const handleAddMember = (isCommittee: boolean) => {
-    if (!input1 || !input2 || !input3) return;
+    if (!input1.trim() || !input2.trim() || !input3.trim()) {
+      alert('দয়া করে নাম, মোবাইল এবং পদবী সঠিকভাবে পূরণ করুন।');
+      return;
+    }
     const newEntry: Member = { 
       id: Date.now().toString(), 
-      name: input1, 
-      phone: input2, 
-      role: input3, 
-      image: input4 || `https://picsum.photos/seed/${Date.now()}/200/200` 
+      name: input1.trim(), 
+      phone: input2.trim(), 
+      role: input3.trim(), 
+      image: input4.trim() || `https://picsum.photos/seed/${Date.now()}/200/200` 
     };
-    if (isCommittee) setCommittee([...committee, newEntry]);
-    else setMembers([...members, newEntry]);
+    if (isCommittee) setCommittee(prev => [...prev, newEntry]);
+    else setMembers(prev => [...prev, newEntry]);
     resetInputs();
     alert('সফলভাবে যুক্ত হয়েছে!');
   };
 
   const handleApproveUser = (userId: string) => {
-    setUsers(users.map(u => u.id === userId ? { ...u, status: 'approved' } : u));
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: 'approved' } : u));
     alert('ইউজার অ্যাপ্রুভ করা হয়েছে!');
   };
 
   const handleRejectUser = (userId: string) => {
-    setUsers(users.filter(u => u.id !== userId));
-    alert('ইউজার রিকোয়েস্ট ডিলিট করা হয়েছে!');
+    if (confirm('আপনি কি নিশ্চিত যে এই রিকোয়েস্টটি ডিলিট করতে চান?')) {
+      setUsers(prev => prev.filter(u => u.id !== userId));
+    }
   };
 
   const pendingRequests = users.filter(u => u.status === 'pending');
@@ -113,7 +117,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <input type="text" placeholder="মোবাইল" className="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-100 outline-none" value={input2} onChange={e => setInput2(e.target.value)} />
                       <input type="text" placeholder="পদবী" className="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-100 outline-none" value={input3} onChange={e => setInput3(e.target.value)} />
                       <input type="text" placeholder="ছবির লিংঙ্ক (URL)" className="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-100 outline-none" value={input4} onChange={e => setInput4(e.target.value)} />
-                      <button onClick={() => handleAddMember(activeTab === 'committee')} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors">সংরক্ষণ করুন</button>
+                      <button onClick={() => handleAddMember(activeTab === 'committee')} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg">সংরক্ষণ করুন</button>
                     </>
                   ) : activeTab === 'notices' ? (
                     <>
@@ -121,20 +125,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <textarea placeholder="নোটিশের বিস্তারিত বর্ণনা" className="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-100 outline-none" rows={4} value={input2} onChange={e => setInput2(e.target.value)}></textarea>
                       <input type="text" placeholder="ইউটিউব ভিডিও লিংঙ্ক (ঐচ্ছিক)" className="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-100 outline-none" value={input3} onChange={e => setInput3(e.target.value)} />
                       <button onClick={() => {
-                        if(!input1 || !input2) return;
-                        setNotices([{id: Date.now().toString(), title: input1, description: input2, videoUrl: input3, date: new Date().toLocaleDateString('bn-BD')}, ...notices]);
+                        if(!input1.trim() || !input2.trim()) {
+                          alert('দয়া করে শিরোনাম এবং বর্ণনা দিন।');
+                          return;
+                        }
+                        setNotices(prev => [{id: Date.now().toString(), title: input1.trim(), description: input2.trim(), videoUrl: input3.trim(), date: new Date().toLocaleDateString('bn-BD')}, ...prev]);
                         resetInputs();
-                      }} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl">পাবলিশ করুন</button>
+                        alert('নোটিশ পাবলিশ হয়েছে!');
+                      }} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg">পাবলিশ করুন</button>
                     </>
                   ) : activeTab === 'gallery' ? (
                     <>
                       <input type="text" placeholder="ছবির লিংঙ্ক (URL)" className="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-100 outline-none" value={input1} onChange={e => setInput1(e.target.value)} />
                       <input type="text" placeholder="ছবির ক্যাপশন" className="w-full p-3 rounded-xl border bg-white focus:ring-2 focus:ring-blue-100 outline-none" value={input2} onChange={e => setInput2(e.target.value)} />
                       <button onClick={() => {
-                        if(!input1) return;
-                        setGallery([{id: Date.now().toString(), url: input1, caption: input2}, ...gallery]);
+                        if(!input1.trim()) {
+                          alert('দয়া করে ছবির ইউআরএল (URL) দিন।');
+                          return;
+                        }
+                        setGallery(prev => [{id: Date.now().toString(), url: input1.trim(), caption: input2.trim()}, ...prev]);
                         resetInputs();
-                      }} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl">গ্যালারিতে যুক্ত করুন</button>
+                        alert('গ্যালারিতে যুক্ত হয়েছে!');
+                      }} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg">গ্যালারিতে যুক্ত করুন</button>
                     </>
                   ) : (
                     <div className="text-slate-500 bg-blue-50 p-4 rounded-xl text-sm border border-blue-100">
@@ -147,43 +159,43 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {/* List Section */}
               <div className="lg:col-span-2">
                 <h3 className="text-lg font-bold mb-6 text-slate-800">বর্তমান ডাটা লিস্ট</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  {activeTab === 'members' && members.map(m => (
-                    <div key={m.id} className="flex items-center justify-between p-4 bg-white border rounded-2xl hover:border-blue-200 transition-all">
+                <div className="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-2 no-scrollbar">
+                  {activeTab === 'members' && (members.length === 0 ? <p className="text-slate-400 italic">কোনো মেম্বার নেই</p> : members.map(m => (
+                    <div key={m.id} className="flex items-center justify-between p-4 bg-white border rounded-2xl hover:border-blue-200 transition-all shadow-sm">
                       <div className="flex items-center">
                         <img src={m.image} className="w-12 h-12 rounded-full object-cover mr-4" />
                         <div><p className="font-bold text-slate-800">{m.name}</p><p className="text-xs text-slate-500">{m.role}</p></div>
                       </div>
-                      <button onClick={() => setMembers(members.filter(x => x.id !== m.id))} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><i className="fas fa-trash"></i></button>
+                      <button onClick={() => { if(confirm('ডিলিট করতে চান?')) setMembers(prev => prev.filter(x => x.id !== m.id)) }} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><i className="fas fa-trash"></i></button>
                     </div>
-                  ))}
-                  {activeTab === 'committee' && committee.map(m => (
-                    <div key={m.id} className="flex items-center justify-between p-4 bg-white border rounded-2xl hover:border-blue-200 transition-all">
+                  )))}
+                  {activeTab === 'committee' && (committee.length === 0 ? <p className="text-slate-400 italic">কোনো কমিটি মেম্বার নেই</p> : committee.map(m => (
+                    <div key={m.id} className="flex items-center justify-between p-4 bg-white border rounded-2xl hover:border-blue-200 transition-all shadow-sm">
                       <div className="flex items-center">
                         <img src={m.image} className="w-12 h-12 rounded-full object-cover mr-4" />
                         <div><p className="font-bold text-slate-800">{m.name}</p><p className="text-xs text-blue-600 font-bold">{m.role}</p></div>
                       </div>
-                      <button onClick={() => setCommittee(committee.filter(x => x.id !== m.id))} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><i className="fas fa-trash"></i></button>
+                      <button onClick={() => { if(confirm('ডিলিট করতে চান?')) setCommittee(prev => prev.filter(x => x.id !== m.id)) }} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"><i className="fas fa-trash"></i></button>
                     </div>
-                  ))}
-                  {activeTab === 'gallery' && gallery.map(img => (
-                    <div key={img.id} className="flex items-center justify-between p-4 bg-white border rounded-2xl">
+                  )))}
+                  {activeTab === 'gallery' && (gallery.length === 0 ? <p className="text-slate-400 italic">গ্যালারি খালি</p> : gallery.map(img => (
+                    <div key={img.id} className="flex items-center justify-between p-4 bg-white border rounded-2xl shadow-sm">
                       <div className="flex items-center overflow-hidden">
                         <img src={img.url} className="w-16 h-12 rounded object-cover mr-4" />
                         <p className="truncate text-sm font-medium">{img.caption || 'No caption'}</p>
                       </div>
-                      <button onClick={() => setGallery(gallery.filter(x => x.id !== img.id))} className="text-red-500 shrink-0 ml-4"><i className="fas fa-trash"></i></button>
+                      <button onClick={() => { if(confirm('ডিলিট করতে চান?')) setGallery(prev => prev.filter(x => x.id !== img.id)) }} className="text-red-500 shrink-0 ml-4"><i className="fas fa-trash"></i></button>
                     </div>
-                  ))}
-                  {activeTab === 'notices' && notices.map(n => (
-                    <div key={n.id} className="p-4 bg-white border rounded-2xl">
+                  )))}
+                  {activeTab === 'notices' && (notices.length === 0 ? <p className="text-slate-400 italic">কোনো নোটিশ নেই</p> : notices.map(n => (
+                    <div key={n.id} className="p-4 bg-white border rounded-2xl shadow-sm">
                       <div className="flex justify-between items-start mb-2">
                         <p className="font-bold text-slate-800">{n.title}</p>
-                        <button onClick={() => setNotices(notices.filter(x => x.id !== n.id))} className="text-red-500"><i className="fas fa-trash"></i></button>
+                        <button onClick={() => { if(confirm('ডিলিট করতে চান?')) setNotices(prev => prev.filter(x => x.id !== n.id)) }} className="text-red-500"><i className="fas fa-trash"></i></button>
                       </div>
                       <p className="text-xs text-slate-500 line-clamp-2">{n.description}</p>
                     </div>
-                  ))}
+                  )))}
                 </div>
               </div>
             </>
@@ -199,7 +211,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {pendingRequests.map(u => (
-                    <div key={u.id} className="bg-white border-2 border-slate-100 p-6 rounded-2xl shadow-sm">
+                    <div key={u.id} className="bg-white border-2 border-slate-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start mb-4">
                         <div>
                           <h4 className="font-bold text-xl text-slate-800">{u.name}</h4>
@@ -211,15 +223,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <div className="flex gap-3 pt-4 border-t border-slate-50">
                         <button 
                           onClick={() => handleApproveUser(u.id)}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-xl transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
                         >
-                          <i className="fas fa-check"></i> অ্যাপ্রুভ করুন
+                          <i className="fas fa-check"></i> অ্যাপ্রুভ
                         </button>
                         <button 
                           onClick={() => handleRejectUser(u.id)}
                           className="flex-1 bg-red-100 hover:bg-red-200 text-red-600 font-bold py-2 rounded-xl transition-colors flex items-center justify-center gap-2"
                         >
-                          <i className="fas fa-times"></i> রিজেক্ট
+                          <i className="fas fa-times"></i> বাতিল
                         </button>
                       </div>
                     </div>
