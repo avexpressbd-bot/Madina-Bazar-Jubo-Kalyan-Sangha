@@ -16,12 +16,18 @@ import { db, ref, onValue } from './firebase';
 import { View, Member, Notice, TournamentStats, Team, GalleryImage, User, Post, FooterData, AboutData } from './types';
 
 const App: React.FC = () => {
-  // Navigation & Auth local state
-  const [currentView, setCurrentView] = useState<View>('home');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // Navigation & Auth state (Loaded from LocalStorage to persist on refresh)
+  const [currentView, setCurrentView] = useState<View>(() => {
+    return (localStorage.getItem('mbjks_currentView') as View) || 'home';
+  });
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return localStorage.getItem('mbjks_isLoggedIn') === 'true';
+  });
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return localStorage.getItem('mbjks_isAdmin') === 'true';
+  });
   
-  // App Data State (Synced with Firebase)
+  // App Data State (Will be synced with Firebase)
   const [users, setUsers] = useState<User[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -51,7 +57,14 @@ const App: React.FC = () => {
     participatingTeams: []
   });
 
-  // Sync with Firebase on mount
+  // Persist State Changes
+  useEffect(() => {
+    localStorage.setItem('mbjks_isLoggedIn', String(isLoggedIn));
+    localStorage.setItem('mbjks_isAdmin', String(isAdmin));
+    localStorage.setItem('mbjks_currentView', currentView);
+  }, [isLoggedIn, isAdmin, currentView]);
+
+  // Sync with Firebase Real-time Database
   useEffect(() => {
     const refs = {
       users: ref(db, 'users'),
@@ -70,9 +83,9 @@ const App: React.FC = () => {
       return onValue(dbRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
-          const formattedData = (key === 'footerData' || key === 'aboutData' || key === 'cricketStats') 
-            ? data 
-            : Object.values(data);
+          // If it's a collection, convert object to array
+          const isObjectCollection = !['footerData', 'aboutData', 'cricketStats'].includes(key);
+          const formattedData = isObjectCollection ? Object.values(data) : data;
           
           switch(key) {
             case 'users': setUsers(formattedData as User[]); break;
@@ -97,6 +110,8 @@ const App: React.FC = () => {
     setIsLoggedIn(false);
     setIsAdmin(false);
     setCurrentView('home');
+    localStorage.removeItem('mbjks_isLoggedIn');
+    localStorage.removeItem('mbjks_isAdmin');
   };
 
   const renderView = () => {
@@ -111,7 +126,10 @@ const App: React.FC = () => {
       case 'cricket': return <CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} />;
       case 'auth': return <Auth onLogin={(role) => { setIsLoggedIn(true); setIsAdmin(role === 'admin'); setCurrentView(role === 'admin' ? 'admin' : 'home'); }} users={users} />;
       case 'admin': 
-        if (!isAdmin) return null;
+        if (!isAdmin) {
+          setCurrentView('home');
+          return null;
+        }
         return <AdminDashboard 
           members={members} committee={committee} notices={notices} gallery={gallery}
           upcomingTeams={upcomingTeams} cricketStats={cricketStats} users={users} posts={posts}
@@ -124,7 +142,9 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar currentView={currentView} setView={setCurrentView} isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} users={users} />
-      <main className="flex-grow pt-16">{renderView()}</main>
+      <main className="flex-grow pt-16">
+        {renderView()}
+      </main>
       <Footer setView={setCurrentView} footerData={footerData} />
     </div>
   );
