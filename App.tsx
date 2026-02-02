@@ -17,9 +17,17 @@ import { db } from './firebase';
 import { doc, onSnapshot, collection, setDoc } from 'firebase/firestore';
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<View>('home');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // Initialize states from localStorage to persist login
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return localStorage.getItem('mbjks_isLoggedIn') === 'true';
+  });
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return localStorage.getItem('mbjks_isAdmin') === 'true';
+  });
+  const [currentView, setCurrentView] = useState<View>(() => {
+    const savedAdmin = localStorage.getItem('mbjks_isAdmin') === 'true';
+    return savedAdmin ? 'admin' : 'home';
+  });
   
   // States to be synced with Firestore
   const [users, setUsers] = useState<User[]>([]);
@@ -108,15 +116,27 @@ const App: React.FC = () => {
     };
   }, []);
 
+  const handleLogin = (role: 'user' | 'admin') => {
+    setIsLoggedIn(true);
+    const isAdminRole = role === 'admin';
+    setIsAdmin(isAdminRole);
+    
+    // Save to localStorage
+    localStorage.setItem('mbjks_isLoggedIn', 'true');
+    localStorage.setItem('mbjks_isAdmin', isAdminRole ? 'true' : 'false');
+    
+    setCurrentView(isAdminRole ? 'admin' : 'home');
+  };
+
   const handleLogout = () => {
     setIsLoggedIn(false);
     setIsAdmin(false);
+    
+    // Clear localStorage
+    localStorage.removeItem('mbjks_isLoggedIn');
+    localStorage.removeItem('mbjks_isAdmin');
+    
     setCurrentView('home');
-  };
-
-  // Helper to update Firestore
-  const updateGlobalSettings = async (newData: any) => {
-    await setDoc(doc(db, 'settings', 'global'), newData, { merge: true });
   };
 
   const renderView = () => {
@@ -129,9 +149,9 @@ const App: React.FC = () => {
       case 'notice': return <NoticeBoard notices={notices} />;
       case 'contact': return <Contact footerData={footerData} />;
       case 'cricket': return <CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} />;
-      case 'auth': return <Auth onLogin={(role) => { setIsLoggedIn(true); setIsAdmin(role === 'admin'); setCurrentView(role === 'admin' ? 'admin' : 'home'); }} users={users} />;
+      case 'auth': return <Auth onLogin={handleLogin} users={users} />;
       case 'admin': 
-        if (!isAdmin) return null;
+        if (!isAdmin) return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} />;
         return <AdminDashboard 
           members={members} committee={committee}
           notices={notices} gallery={gallery}
