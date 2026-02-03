@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { db, ref, set, push } from '../firebase';
+import React, { useState, useRef } from 'react';
+import { db, storage, ref, sRef, set, push, uploadBytes, getDownloadURL } from '../firebase';
 import { User } from '../types';
 
 interface AuthProps {
@@ -11,13 +11,44 @@ interface AuthProps {
 const Auth: React.FC<AuthProps> = ({ onLogin, users }) => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', password: ''
+    name: '', email: '', phone: '', password: '', image: ''
   });
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const ADMIN_EMAIL = 'admin@mbjks.org'; 
   const ADMIN_PASSWORD = 'admin123';
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (limit to 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setError('ছবির সাইজ ২ মেগাবাইটের কম হতে হবে।');
+      return;
+    }
+
+    setIsUploading(true);
+    setError('');
+    
+    try {
+      const storageRef = sRef(storage, `users/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      setFormData(prev => ({ ...prev, image: downloadURL }));
+      setSuccess('ছবি আপলোড সফল হয়েছে!');
+    } catch (err) {
+      console.error("Upload error:", err);
+      setError('ছবি আপলোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +70,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users }) => {
         onLogin(foundUser.role);
       }
     } else {
+      if (!formData.image) {
+        setError('দয়া করে আপনার প্রোফাইল ছবি আপলোড করুন।');
+        return;
+      }
+
       if (users.some((u) => u.email === formData.email)) {
         setError('এই ইমেইল দিয়ে ইতিপূর্বেই একাউন্ট খোলা হয়েছে।');
         return;
@@ -52,6 +88,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users }) => {
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
+        image: formData.image,
         status: 'pending',
         role: 'user'
       };
@@ -61,7 +98,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users }) => {
       setSuccess('আপনার আবেদন সফলভাবে জমা হয়েছে! এডমিন অনুমোদন করার পর আপনি লগইন করতে পারবেন।');
       setTimeout(() => {
         setIsLoginView(true);
-        setFormData({ name: '', email: formData.email, phone: '', password: '' });
+        setFormData({ name: '', email: formData.email, phone: '', password: '', image: '' });
       }, 3500);
     }
   };
@@ -72,14 +109,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users }) => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border">
+      <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border animate-fadeIn">
         <div className="bg-blue-600 p-8 text-white text-center">
           <h2 className="text-3xl font-bold mb-2">{isLoginView ? 'লগইন' : 'রেজিস্ট্রেশন'}</h2>
           <p className="opacity-80">মদিনা বাজার যুব কল্যাণ সংঘ</p>
         </div>
         
         <form className="p-8 space-y-5" onSubmit={handleSubmit}>
-          {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold flex items-start">
+          {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold flex items-start animate-bounce">
             <i className="fas fa-exclamation-circle mr-2 mt-0.5"></i><span>{error}</span>
           </div>}
           
@@ -89,20 +126,54 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users }) => {
 
           {!isLoginView && (
             <>
-              <input type="text" name="name" required value={formData.name} onChange={handleChange} placeholder="আপনার নাম" className="w-full px-4 py-3 rounded-xl border outline-none" />
-              <input type="text" name="phone" required value={formData.phone} onChange={handleChange} placeholder="মোবাইল নম্বর" className="w-full px-4 py-3 rounded-xl border outline-none" />
+              {/* Profile Image Upload */}
+              <div className="flex flex-col items-center mb-4">
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-24 h-24 rounded-full bg-slate-100 border-2 border-dashed border-blue-300 flex items-center justify-center overflow-hidden cursor-pointer hover:border-blue-500 transition-all group relative"
+                >
+                  {formData.image ? (
+                    <img src={formData.image} className="w-full h-full object-cover" alt="Profile preview" />
+                  ) : (
+                    <div className="text-center">
+                      <i className={`fas ${isUploading ? 'fa-spinner fa-spin' : 'fa-camera'} text-blue-400 text-xl`}></i>
+                      <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">ছবি দিন</p>
+                    </div>
+                  )}
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
+                      <i className="fas fa-circle-notch fa-spin text-blue-600"></i>
+                    </div>
+                  )}
+                </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
+                {!formData.image && <p className="text-[10px] text-slate-400 mt-2">প্রোফাইল ছবি আপলোড করুন</p>}
+              </div>
+
+              <input type="text" name="name" required value={formData.name} onChange={handleChange} placeholder="আপনার নাম" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100" />
+              <input type="text" name="phone" required value={formData.phone} onChange={handleChange} placeholder="মোবাইল নম্বর" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100" />
             </>
           )}
 
-          <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="ইমেইল ঠিকানা" className="w-full px-4 py-3 rounded-xl border outline-none" />
-          <input type="password" name="password" required value={formData.password} onChange={handleChange} placeholder="পাসওয়ার্ড" className="w-full px-4 py-3 rounded-xl border outline-none" />
+          <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="ইমেইল ঠিকানা" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100" />
+          <input type="password" name="password" required value={formData.password} onChange={handleChange} placeholder="পাসওয়ার্ড" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100" />
 
-          <button type="submit" className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
-            {isLoginView ? 'লগইন করুন' : 'আবেদন জমা দিন'}
+          <button 
+            type="submit" 
+            disabled={isUploading}
+            className={`w-full ${isUploading ? 'bg-slate-400' : 'bg-blue-600 hover:bg-blue-700'} text-white font-black py-4 rounded-xl shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5`}
+          >
+            {isUploading ? 'ছবি আপলোড হচ্ছে...' : (isLoginView ? 'লগইন করুন' : 'আবেদন জমা দিন')}
           </button>
 
           <div className="text-center pt-2">
-            <button type="button" onClick={() => setIsLoginView(!isLoginView)} className="text-blue-600 font-bold text-sm">
+            <button type="button" onClick={() => { setIsLoginView(!isLoginView); setError(''); setSuccess(''); }} className="text-blue-600 font-bold text-sm hover:underline">
               {isLoginView ? 'নতুন মেম্বার হতে চান? আবেদন করুন' : 'ইতিমধ্যেই একাউন্ট আছে? লগইন'}
             </button>
           </div>

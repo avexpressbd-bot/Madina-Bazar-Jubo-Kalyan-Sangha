@@ -13,6 +13,7 @@ export interface User {
   email: string;
   phone: string;
   password: string;
+  image?: string;
   status: 'pending' | 'approved';
   role: 'user' | 'admin';
 }
@@ -80,7 +81,7 @@ export interface TournamentStats {
   runnerUpImage?: string;
   topScorer: { name: string; runs: number; image: string };
   topWicketTaker: { name: string; wickets: number; image: string };
-  participatingTeams: string[];
+  participatingTeams: []
 }
 
 export type View = 'home' | 'about' | 'members' | 'committee' | 'gallery' | 'notice' | 'contact' | 'cricket' | 'auth' | 'admin';

@@ -81,6 +81,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     window.scrollTo({ top: 100, behavior: 'smooth' });
   };
 
+  const handleApproveUser = async (user: User) => {
+    if (!window.confirm(`${user.name} কে মেম্বার হিসেবে অনুমোদন করবেন?`)) return;
+    setIsSaving(true);
+    try {
+      // 1. Update User Status in Database
+      const userRef = ref(db, `users/${user.id}`);
+      await update(userRef, { status: 'approved' });
+
+      // 2. Create a Member Entry automatically
+      const memberId = push(ref(db, 'members')).key || Date.now().toString();
+      const newMember: Member = {
+        id: memberId,
+        name: user.name,
+        phone: user.phone,
+        role: 'সাধারণ সদস্য',
+        image: user.image || DEFAULT_AVATAR
+      };
+      await set(ref(db, `members/${memberId}`), newMember);
+
+      showSuccess('মেম্বার অনুমোদন করা হয়েছে এবং মেম্বার লিস্টে যুক্ত হয়েছে!');
+    } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
+  };
+
+  const handleRejectUser = async (userId: string) => {
+    if (!window.confirm('আবেদনটি বাতিল করবেন?')) return;
+    setIsSaving(true);
+    try {
+      await set(ref(db, `users/${userId}`), null);
+      showSuccess('আবেদন মুছে ফেলা হয়েছে');
+    } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fadeIn">
       {saveStatus && (
@@ -109,6 +141,51 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         <div className="p-8 lg:p-12 min-h-[600px]">
+          {/* Requests Tab */}
+          {activeTab === 'requests' && (
+            <div className="space-y-8">
+              <div className="flex justify-between items-center mb-6">
+                <h4 className="font-black text-2xl text-slate-800">নতুন মেম্বারশিপ আবেদন</h4>
+                <p className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-black">{users.filter(u => u.status === 'pending').length}টি আবেদন পেন্ডিং</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {users.filter(u => u.status === 'pending').map(user => (
+                  <div key={user.id} className="bg-slate-50 border rounded-3xl p-6 flex flex-col md:flex-row gap-6 shadow-sm hover:shadow-md transition-all">
+                    <img src={user.image || DEFAULT_AVATAR} className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-md" alt={user.name} />
+                    <div className="flex-1 space-y-2">
+                      <h5 className="font-black text-xl text-slate-800">{user.name}</h5>
+                      <div className="text-xs space-y-1 font-bold text-slate-500">
+                        <p><i className="fas fa-phone mr-2 text-blue-500"></i> {user.phone}</p>
+                        <p><i className="fas fa-envelope mr-2 text-blue-500"></i> {user.email}</p>
+                      </div>
+                      <div className="flex gap-2 pt-4">
+                        <button 
+                          onClick={() => handleApproveUser(user)}
+                          className="flex-1 bg-green-600 text-white py-2.5 rounded-xl font-black text-xs hover:bg-green-700 transition-all shadow-md active:scale-95"
+                        >
+                          অনুমোদন দিন
+                        </button>
+                        <button 
+                          onClick={() => handleRejectUser(user.id)}
+                          className="px-4 bg-white text-red-500 border border-red-200 py-2.5 rounded-xl font-black text-xs hover:bg-red-50 transition-all shadow-md active:scale-95"
+                        >
+                          বাতিল
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {users.filter(u => u.status === 'pending').length === 0 && (
+                  <div className="col-span-full py-24 text-center">
+                    <i className="fas fa-check-circle text-6xl text-slate-100 mb-6"></i>
+                    <p className="font-bold text-slate-400 italic">বর্তমানে কোনো নতুন আবেদন নেই।</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Site Settings Tab */}
           {activeTab === 'site_settings' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -205,7 +282,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* Other tabs kept as is */}
           {activeTab === 'feed' && (
             <div className="space-y-10">
               <div className={`p-8 rounded-[2.5rem] border-2 transition-all shadow-xl ${editingPostId ? 'bg-blue-50 border-blue-400' : 'bg-slate-50 border-dashed border-slate-300'}`}>
