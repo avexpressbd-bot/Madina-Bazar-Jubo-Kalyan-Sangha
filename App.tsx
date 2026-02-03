@@ -35,6 +35,7 @@ const App: React.FC = () => {
   const [upcomingTeams, setUpcomingTeams] = useState<Team[]>([]);
   
   const [footerData, setFooterData] = useState<FooterData>({
+    logoUrl: '',
     heroImageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=2000',
     urgentNews: 'স্বাগতম! মদিনা বাজার যুব কল্যাণ সংঘের নতুন ওয়েবসাইট এখন লাইভ।',
     description: 'একটি সামাজিক সংগঠন যা যুবদের উন্নয়ন ও সমাজসেবায় নিবেদিত।',

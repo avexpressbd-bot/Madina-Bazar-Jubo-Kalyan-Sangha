@@ -71,7 +71,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
   };
 
-  // Fix for Error in file views/AdminDashboard.tsx on line 239: Cannot find name 'startEditPost'.
   const startEditPost = (post: Post) => {
     setEditingPostId(post.id);
     setNewPost({
@@ -79,7 +78,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       mediaUrl: post.mediaUrl || '',
       mediaType: post.mediaType
     });
-    // Optional: Scroll to the form if it's far
     window.scrollTo({ top: 100, behavior: 'smooth' });
   };
 
@@ -111,7 +109,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         <div className="p-8 lg:p-12 min-h-[600px]">
-          {/* Site Settings Tab - Enhanced About Section */}
+          {/* Site Settings Tab */}
           {activeTab === 'site_settings' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                <div className="space-y-8">
@@ -163,6 +161,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                     <div className="space-y-5">
                       <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 ml-1 uppercase">ওয়েবসাইট লগো (URL)</label>
+                        <input className="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-blue-100" placeholder="লগো ছবির লিঙ্ক..." value={localFooter.logoUrl || ''} onChange={e => setLocalFooter({...localFooter, logoUrl: e.target.value})} />
+                      </div>
+                      <div className="space-y-1">
                         <label className="text-[10px] font-black text-slate-400 ml-1 uppercase">ব্যানার ইমেজ (Home Hero)</label>
                         <input className="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-blue-100" placeholder="ব্যানার লিঙ্ক..." value={localFooter.heroImageUrl} onChange={e => setLocalFooter({...localFooter, heroImageUrl: e.target.value})} />
                       </div>
@@ -203,7 +205,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* Post Feed Tab */}
+          {/* Other tabs kept as is */}
           {activeTab === 'feed' && (
             <div className="space-y-10">
               <div className={`p-8 rounded-[2.5rem] border-2 transition-all shadow-xl ${editingPostId ? 'bg-blue-50 border-blue-400' : 'bg-slate-50 border-dashed border-slate-300'}`}>
@@ -258,7 +260,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* Notice Board Tab */}
           {activeTab === 'notices' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                <div className={`p-8 rounded-[2.5rem] border-2 h-fit transition-all shadow-xl ${editingNoticeId ? 'bg-orange-50 border-orange-300' : 'bg-slate-50 border-slate-200'}`}>
@@ -315,7 +316,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
           
-          {/* Other Tabs handled consistently with updated styles... */}
           {activeTab === 'people' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200 h-fit shadow-inner">

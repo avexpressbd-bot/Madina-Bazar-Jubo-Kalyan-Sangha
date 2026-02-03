@@ -52,8 +52,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, setView, isLoggedIn, isAdm
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => setView('home')}>
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg transform group-hover:rotate-6 transition-transform">
-                <i className="fas fa-handshake text-blue-700 text-xl"></i>
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg transform group-hover:rotate-6 transition-transform overflow-hidden">
+                {footerData.logoUrl ? (
+                  <img src={footerData.logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+                ) : (
+                  <i className="fas fa-handshake text-blue-700 text-xl"></i>
+                )}
               </div>
               <div className="flex flex-col">
                 <span className="font-black text-sm md:text-lg tracking-tight leading-none">মদিনা বাজার যুব কল্যাণ সংঘ</span>

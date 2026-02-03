@@ -45,6 +45,7 @@ export interface AboutData {
 }
 
 export interface FooterData {
+  logoUrl?: string;
   heroImageUrl: string;
   urgentNews: string;
   description: string;
