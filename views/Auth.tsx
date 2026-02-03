@@ -73,51 +73,41 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users }) => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border animate-fadeIn">
+      <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border">
         <div className="bg-blue-600 p-8 text-white text-center">
           <h2 className="text-3xl font-bold mb-2">{isLoginView ? 'লগইন' : 'রেজিস্ট্রেশন'}</h2>
           <p className="opacity-80">মদিনা বাজার যুব কল্যাণ সংঘ</p>
         </div>
         
         <form className="p-8 space-y-5" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-xl text-[11px] font-bold flex items-start border border-red-100 animate-pulse">
-              <i className="fas fa-exclamation-circle mr-2 mt-0.5"></i>
-              <span>{error}</span>
-            </div>
-          )}
+          {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold flex items-start">
+            <i className="fas fa-exclamation-circle mr-2 mt-0.5"></i><span>{error}</span>
+          </div>}
           
-          {success && (
-            <div className="bg-green-50 text-green-600 p-4 rounded-xl text-[11px] font-bold flex items-start border border-green-100">
-              <i className="fas fa-check-circle mr-2 mt-0.5"></i>
-              <span>{success}</span>
-            </div>
-          )}
+          {success && <div className="bg-green-50 text-green-600 p-4 rounded-xl text-xs font-bold flex items-start">
+            <i className="fas fa-check-circle mr-2 mt-0.5"></i><span>{success}</span>
+          </div>}
 
           {!isLoginView && (
             <>
-              <input type="text" name="name" required value={formData.name} onChange={handleChange} placeholder="আপনার নাম" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
-              <input type="text" name="phone" required value={formData.phone} onChange={handleChange} placeholder="মোবাইল নম্বর" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
-              <input type="text" name="image" value={formData.image} onChange={handleChange} placeholder="প্রোফাইল ছবির লিংক (ঐচ্ছিক)" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+              <input type="text" name="name" required value={formData.name} onChange={handleChange} placeholder="আপনার নাম" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100" />
+              <input type="text" name="phone" required value={formData.phone} onChange={handleChange} placeholder="মোবাইল নম্বর" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100" />
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">আপনার প্রোফাইল ছবি (লিঙ্ক দিন)</label>
+                <input type="text" name="image" value={formData.image} onChange={handleChange} placeholder="https://image-link.com/photo.jpg" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100" />
+              </div>
             </>
           )}
 
-          <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="ইমেইল ঠিকানা" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
-          <input type="password" name="password" required value={formData.password} onChange={handleChange} placeholder="পাসওয়ার্ড" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100 transition-all" />
+          <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="ইমেইল ঠিকানা" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100" />
+          <input type="password" name="password" required value={formData.password} onChange={handleChange} placeholder="পাসওয়ার্ড" className="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-100" />
 
-          <button 
-            type="submit" 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95"
-          >
+          <button type="submit" className="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5">
             {isLoginView ? 'লগইন করুন' : 'আবেদন জমা দিন'}
           </button>
 
           <div className="text-center pt-2">
-            <button 
-              type="button" 
-              onClick={() => { setIsLoginView(!isLoginView); setError(''); setSuccess(''); }} 
-              className="text-blue-600 font-bold text-sm hover:underline"
-            >
+            <button type="button" onClick={() => { setIsLoginView(!isLoginView); setError(''); setSuccess(''); }} className="text-blue-600 font-bold text-sm hover:underline">
               {isLoginView ? 'নতুন মেম্বার হতে চান? আবেদন করুন' : 'ইতিমধ্যেই একাউন্ট আছে? লগইন'}
             </button>
           </div>
