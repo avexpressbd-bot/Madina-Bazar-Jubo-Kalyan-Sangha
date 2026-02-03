@@ -130,34 +130,37 @@ const App: React.FC = () => {
   };
 
   const renderView = () => {
+    // Corrected padding-top logic in the main app to accommodate the double-height navbar
+    const ptClass = "pt-[104px]"; // 40px top bar + 64px main nav
+
     switch (currentView) {
-      case 'home': return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} upcomingTeams={upcomingTeams} />;
-      case 'about': return <About data={aboutData} />;
-      case 'members': return <Members members={members} />;
-      case 'committee': return <Committee members={committee} />;
-      case 'gallery': return <Gallery images={gallery} />;
-      case 'notice': return <NoticeBoard notices={notices} />;
-      case 'contact': return <Contact footerData={footerData} />;
-      case 'cricket': return <CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} />;
-      case 'auth': return <Auth onLogin={(role) => { setIsLoggedIn(true); setIsAdmin(role === 'admin'); setCurrentView(role === 'admin' ? 'admin' : 'home'); }} users={users} />;
+      case 'home': return <div className={ptClass}><Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} upcomingTeams={upcomingTeams} /></div>;
+      case 'about': return <div className={ptClass}><About data={aboutData} /></div>;
+      case 'members': return <div className={ptClass}><Members members={members} /></div>;
+      case 'committee': return <div className={ptClass}><Committee members={committee} /></div>;
+      case 'gallery': return <div className={ptClass}><Gallery images={gallery} /></div>;
+      case 'notice': return <div className={ptClass}><NoticeBoard notices={notices} /></div>;
+      case 'contact': return <div className={ptClass}><Contact footerData={footerData} /></div>;
+      case 'cricket': return <div className={ptClass}><CricketHub stats={cricketStats} upcomingTeams={upcomingTeams} /></div>;
+      case 'auth': return <div className={ptClass}><Auth onLogin={(role) => { setIsLoggedIn(true); setIsAdmin(role === 'admin'); setCurrentView(role === 'admin' ? 'admin' : 'home'); }} users={users} /></div>;
       case 'admin': 
         if (!isAdmin) {
           setCurrentView('home');
           return null;
         }
-        return <AdminDashboard 
+        return <div className={ptClass}><AdminDashboard 
           members={members} committee={committee} notices={notices} gallery={gallery}
           upcomingTeams={upcomingTeams} cricketStats={cricketStats} users={users} posts={posts}
           footerData={footerData} aboutData={aboutData}
-        />;
-      default: return <Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} upcomingTeams={upcomingTeams} />;
+        /></div>;
+      default: return <div className={ptClass}><Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} upcomingTeams={upcomingTeams} /></div>;
     }
   };
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar currentView={currentView} setView={setCurrentView} isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} users={users} />
-      <main className="flex-grow pt-16">
+      <Navbar currentView={currentView} setView={setCurrentView} isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} users={users} footerData={footerData} />
+      <main className="flex-grow">
         {renderView()}
       </main>
       <Footer setView={setCurrentView} footerData={footerData} />

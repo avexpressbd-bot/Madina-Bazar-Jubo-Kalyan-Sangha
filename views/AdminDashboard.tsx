@@ -30,35 +30,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setSaveStatus(null), 3000);
   };
 
-  // --- Local States for Editing ---
+  // --- Local States ---
   const [newPerson, setNewPerson] = useState({ name: '', role: '', phone: '', image: '', type: 'member' });
   const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
-  
   const [newPost, setNewPost] = useState({ content: '', mediaUrl: '', mediaType: 'none' as any });
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
-
   const [newNotice, setNewNotice] = useState({ title: '', description: '', videoUrl: '' });
   const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
-
   const [newGalleryImg, setNewGalleryImg] = useState({ url: '', caption: '' });
   const [localCricketStats, setLocalCricketStats] = useState<TournamentStats>(cricketStats);
   const [newTeam, setNewTeam] = useState({ name: '', logo: '', captainName: '', captainImage: '', playersCount: '0' });
-  const [newParticipatingTeam, setNewParticipatingTeam] = useState('');
   const [localFooter, setLocalFooter] = useState<FooterData>(footerData);
   const [localAbout, setLocalAbout] = useState<AboutData>(aboutData);
 
   useEffect(() => {
-    setLocalCricketStats(cricketStats || {
-      year: '', winner: '', winnerImage: '', runnerUp: '', runnerUpImage: '',
-      topScorer: { name: '', runs: 0, image: '' },
-      topWicketTaker: { name: '', wickets: 0, image: '' },
-      participatingTeams: []
-    });
-    setLocalFooter(footerData);
-    setLocalAbout(aboutData || { description: '', mission: '', vision: '', stats: [] });
+    if (cricketStats) setLocalCricketStats(cricketStats);
+    if (footerData) setLocalFooter(footerData);
+    if (aboutData) setLocalAbout(aboutData);
   }, [cricketStats, footerData, aboutData]);
 
-  // --- Post Functions ---
+  // --- Handlers ---
   const handlePostSubmit = async () => {
     if(!newPost.content) return alert('পোস্টের লেখা লিখুন');
     setIsSaving(true);
@@ -70,51 +61,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         date: editingPostId ? posts.find(p => p.id === editingPostId)?.date : new Date().toLocaleDateString('bn-BD'),
         likes: posts.find(p => p.id === editingPostId)?.likes || 0
       };
-      
       await set(ref(db, `posts/${id}`), postData);
-
-      // Auto Gallery only for NEW image posts
       if (!editingPostId && newPost.mediaType === 'image' && newPost.mediaUrl) {
-        const galleryRef = push(ref(db, 'gallery'));
-        await set(galleryRef, {
-          id: galleryRef.key,
-          url: newPost.mediaUrl,
-          caption: newPost.content.substring(0, 30) + '...'
-        });
+        const gRef = push(ref(db, 'gallery'));
+        await set(gRef, { id: gRef.key, url: newPost.mediaUrl, caption: newPost.content.substring(0, 30) });
       }
-
-      setNewPost({content:'', mediaUrl:'', mediaType:'none'});
-      setEditingPostId(null);
-      showSuccess(editingPostId ? 'পোস্ট আপডেট করা হয়েছে' : 'পোস্ট পাবলিশ করা হয়েছে');
+      setNewPost({content:'', mediaUrl:'', mediaType:'none'}); setEditingPostId(null);
+      showSuccess(editingPostId ? 'পোস্ট আপডেট হয়েছে' : 'পাবলিশ হয়েছে');
     } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
   };
 
+  // Fix for Error in file views/AdminDashboard.tsx on line 239: Cannot find name 'startEditPost'.
   const startEditPost = (post: Post) => {
-    setNewPost({ content: post.content, mediaUrl: post.mediaUrl || '', mediaType: post.mediaType });
     setEditingPostId(post.id);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // --- Cricket Functions ---
-  const handleCricketSubmit = async () => {
-    setIsSaving(true);
-    try {
-      await set(ref(db, 'cricketStats'), localCricketStats);
-      showSuccess('ক্রিকেট হাবের তথ্য আপডেট হয়েছে');
-    } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
+    setNewPost({
+      content: post.content,
+      mediaUrl: post.mediaUrl || '',
+      mediaType: post.mediaType
+    });
+    // Optional: Scroll to the form if it's far
+    window.scrollTo({ top: 100, behavior: 'smooth' });
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 animate-fadeIn">
       {saveStatus && (
-        <div className="fixed top-24 right-4 z-[100] bg-green-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-green-400">
+        <div className="fixed top-28 right-4 z-[100] bg-emerald-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-emerald-400 animate-bounce">
           <i className="fas fa-check-circle text-xl"></i>
           <span className="font-bold">{saveStatus}</span>
         </div>
       )}
 
       <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100">
-        <div className="bg-slate-900 px-6 py-4 flex flex-wrap gap-2">
+        <div className="bg-slate-900 px-6 py-4 flex flex-wrap gap-2 overflow-x-auto no-scrollbar">
           {[
             { id: 'people', label: 'মেম্বার ও কমিটি', icon: 'fa-users' },
             { id: 'feed', label: 'পোস্ট ফিড', icon: 'fa-rss' },
@@ -125,59 +104,152 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'site_settings', label: 'সাইট সেটিংস', icon: 'fa-cog' },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+              className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-slate-800'}`}>
               <i className={`fas ${tab.icon}`}></i> {tab.label}
             </button>
           ))}
         </div>
 
-        <div className="p-8 lg:p-12">
-          {/* --- POST FEED (NOW WITH EDIT) --- */}
+        <div className="p-8 lg:p-12 min-h-[600px]">
+          {/* Site Settings Tab - Enhanced About Section */}
+          {activeTab === 'site_settings' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+               <div className="space-y-8">
+                  <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200 shadow-inner">
+                    <div className="flex items-center gap-4 mb-8">
+                       <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center"><i className="fas fa-info-circle text-xl"></i></div>
+                       <h4 className="font-black text-2xl text-slate-800">এবাউট সেকশন এডিটর</h4>
+                    </div>
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">সংগঠনের মূল বর্ণনা</label>
+                        <textarea className="w-full p-5 border rounded-2xl h-40 outline-none focus:ring-4 focus:ring-purple-100 transition-all text-sm leading-relaxed" placeholder="আমাদের সংঘের গৌরবোজ্জ্বল ইতিহাস লিখুন..." value={localAbout.description} onChange={e => setLocalAbout({...localAbout, description: e.target.value})} />
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">লক্ষ্য (Mission)</label>
+                          <textarea className="w-full p-4 border rounded-xl h-24 outline-none focus:ring-4 focus:ring-purple-100 text-xs" value={localAbout.mission} onChange={e => setLocalAbout({...localAbout, mission: e.target.value})} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">উদ্দেশ্য (Vision)</label>
+                          <textarea className="w-full p-4 border rounded-xl h-24 outline-none focus:ring-4 focus:ring-purple-100 text-xs" value={localAbout.vision} onChange={e => setLocalAbout({...localAbout, vision: e.target.value})} />
+                        </div>
+                      </div>
+                      <div className="pt-6 border-t border-slate-200">
+                        <div className="flex justify-between items-center mb-6">
+                          <p className="font-black text-xs uppercase tracking-widest text-slate-500">সাফল্যের পরিসংখ্যান (Stats)</p>
+                          <button onClick={() => setLocalAbout({...localAbout, stats: [...(localAbout.stats || []), {label:'', count:''}]})} className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-blue-100 transition-all"><i className="fas fa-plus mr-1"></i> নতুন স্ট্যাট</button>
+                        </div>
+                        <div className="space-y-3">
+                          {(localAbout.stats || []).map((s, idx) => (
+                            <div key={idx} className="flex gap-3 bg-white p-4 rounded-2xl border border-slate-200 items-center shadow-sm">
+                              <input className="flex-1 p-2 border-b-2 border-transparent focus:border-purple-300 outline-none text-xs font-bold" placeholder="লেবেল (উদা: মেম্বার)" value={s.label} onChange={e => { const ns = [...localAbout.stats]; ns[idx].label = e.target.value; setLocalAbout({...localAbout, stats: ns}); }} />
+                              <input className="w-24 p-2 border-b-2 border-transparent focus:border-purple-300 outline-none text-xs font-black text-purple-600" placeholder="সংখ্যা (উদা: ৫০০+)" value={s.count} onChange={e => { const ns = [...localAbout.stats]; ns[idx].count = e.target.value; setLocalAbout({...localAbout, stats: ns}); }} />
+                              <button onClick={() => setLocalAbout({...localAbout, stats: localAbout.stats.filter((_, i) => i !== idx)})} className="text-red-400 p-2 hover:bg-red-50 rounded-xl"><i className="fas fa-trash-alt"></i></button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <button disabled={isSaving} onClick={async () => { setIsSaving(true); await set(ref(db, 'aboutData'), localAbout); setIsSaving(false); showSuccess('এবাউট তথ্য আপডেট হয়েছে'); }} className="w-full bg-purple-600 hover:bg-purple-700 text-white py-5 rounded-2xl font-black text-lg shadow-xl transition-all transform hover:-translate-y-1 active:scale-95">আপডেট এবাউট ডাটা</button>
+                    </div>
+                  </div>
+               </div>
+
+               <div className="space-y-8">
+                  <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200 h-fit shadow-inner">
+                    <div className="flex items-center gap-4 mb-8">
+                       <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center"><i className="fas fa-globe text-xl"></i></div>
+                       <h4 className="font-black text-2xl text-slate-800">কন্টাক্ট ও সোশ্যাল লিঙ্ক</h4>
+                    </div>
+                    <div className="space-y-5">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 ml-1 uppercase">ব্যানার ইমেজ (Home Hero)</label>
+                        <input className="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-blue-100" placeholder="ব্যানার লিঙ্ক..." value={localFooter.heroImageUrl} onChange={e => setLocalFooter({...localFooter, heroImageUrl: e.target.value})} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 ml-1 uppercase">ব্রেকিং নিউজ</label>
+                        <textarea className="w-full p-4 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-100 text-sm" value={localFooter.urgentNews} onChange={e => setLocalFooter({...localFooter, urgentNews: e.target.value})} />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-400 ml-1 uppercase">ঠিকানা</label>
+                          <input className="w-full p-4 border rounded-xl" value={localFooter.address} onChange={e => setLocalFooter({...localFooter, address: e.target.value})} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-400 ml-1 uppercase">ফোন</label>
+                          <input className="w-full p-4 border rounded-xl" value={localFooter.phone} onChange={e => setLocalFooter({...localFooter, phone: e.target.value})} />
+                        </div>
+                      </div>
+                      
+                      <div className="pt-6 border-t border-slate-200 space-y-4">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">সোশ্যাল মিডিয়া প্রোফাইল লিঙ্ক</p>
+                        <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200">
+                           <i className="fab fa-facebook-square text-2xl text-blue-600"></i>
+                           <input className="flex-1 text-xs outline-none" placeholder="ফেসবুক পেজ লিঙ্ক..." value={localFooter.facebook} onChange={e => setLocalFooter({...localFooter, facebook: e.target.value})} />
+                        </div>
+                        <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200">
+                           <i className="fab fa-youtube text-2xl text-red-600"></i>
+                           <input className="flex-1 text-xs outline-none" placeholder="ইউটিউব চ্যানেল লিঙ্ক..." value={localFooter.youtube} onChange={e => setLocalFooter({...localFooter, youtube: e.target.value})} />
+                        </div>
+                        <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-slate-200">
+                           <i className="fab fa-instagram text-2xl text-pink-500"></i>
+                           <input className="flex-1 text-xs outline-none" placeholder="ইনস্টাগ্রাম প্রোফাইল লিঙ্ক..." value={localFooter.instagram} onChange={e => setLocalFooter({...localFooter, instagram: e.target.value})} />
+                        </div>
+                      </div>
+                      <button onClick={async () => { setIsSaving(true); await set(ref(db, 'footerData'), localFooter); setIsSaving(false); showSuccess('সেটিংস সেভ হয়েছে'); }} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl mt-4 hover:bg-black transition-all">সেভ অল সেটিংস</button>
+                    </div>
+                  </div>
+               </div>
+            </div>
+          )}
+
+          {/* Post Feed Tab */}
           {activeTab === 'feed' && (
-            <div className="space-y-8">
-              <div className={`p-8 rounded-[2rem] border-2 transition-all ${editingPostId ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-dashed border-slate-300'}`}>
-                <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
-                  {editingPostId ? <><i className="fas fa-edit text-blue-600"></i> পোস্ট এডিট করুন</> : 'নতুন পোস্ট করুন'}
+            <div className="space-y-10">
+              <div className={`p-8 rounded-[2.5rem] border-2 transition-all shadow-xl ${editingPostId ? 'bg-blue-50 border-blue-400' : 'bg-slate-50 border-dashed border-slate-300'}`}>
+                <h4 className="font-black text-2xl mb-6 flex items-center gap-3">
+                  {editingPostId ? <><i className="fas fa-edit text-blue-600"></i> পোস্ট এডিট করুন</> : <><i className="fas fa-pen-nib text-blue-600"></i> নতুন পোস্ট</>}
                 </h4>
-                <textarea className="w-full p-5 rounded-2xl mb-4 border outline-none min-h-[140px] focus:ring-4 focus:ring-blue-100" placeholder="মদিনা বাজার সংঘের আজকের আপডেট..." value={newPost.content} onChange={e => setNewPost({...newPost, content: e.target.value})} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <textarea className="w-full p-6 rounded-3xl mb-6 border-0 outline-none min-h-[160px] focus:ring-4 focus:ring-blue-100 shadow-inner text-lg leading-relaxed" placeholder="সংঘের নতুন আপডেট শেয়ার করুন..." value={newPost.content} onChange={e => setNewPost({...newPost, content: e.target.value})} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                    <div className="space-y-2">
-                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">মিডিয়া লিংক (ছবি/ভিডিও)</label>
-                     <input className="w-full p-4 border rounded-xl outline-none" placeholder="ইন্টারনেট থেকে সরাসরি লিংক দিন" value={newPost.mediaUrl} onChange={e => setNewPost({...newPost, mediaUrl: e.target.value})} />
+                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">মিডিয়া লিঙ্ক (Direct URL)</label>
+                     <input className="w-full p-4 border rounded-2xl outline-none" placeholder="যেমন: https://image.com/img.jpg" value={newPost.mediaUrl} onChange={e => setNewPost({...newPost, mediaUrl: e.target.value})} />
                    </div>
                    <div className="space-y-2">
-                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">মিডিয়া টাইপ</label>
-                     <select className="w-full p-4 border rounded-xl bg-white outline-none" value={newPost.mediaType} onChange={e => setNewPost({...newPost, mediaType: e.target.value as any})}>
-                       <option value="none">মিডিয়া ছাড়া পোস্ট</option><option value="image">ছবি</option><option value="video">ইউটিউব ভিডিও</option>
+                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">মিডিয়া টাইপ</label>
+                     <select className="w-full p-4 border rounded-2xl bg-white outline-none cursor-pointer" value={newPost.mediaType} onChange={e => setNewPost({...newPost, mediaType: e.target.value as any})}>
+                       <option value="none">শুধু টেক্সট</option><option value="image">ছবি (গ্যালারিতেও যাবে)</option><option value="video">ভিডিও (Youtube Link)</option>
                      </select>
                    </div>
                 </div>
                 <div className="flex gap-4">
-                  <button disabled={isSaving} onClick={handlePostSubmit} className={`flex-1 py-5 rounded-2xl font-bold text-lg shadow-xl flex items-center justify-center gap-3 transition-all ${editingPostId ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white'}`}>
-                    <i className={editingPostId ? "fas fa-sync" : "fas fa-paper-plane"}></i> {isSaving ? 'প্রসেসিং...' : (editingPostId ? 'আপডেট করুন' : 'পাবলিশ করুন')}
+                  <button disabled={isSaving} onClick={handlePostSubmit} className={`flex-1 py-5 rounded-2xl font-black text-lg shadow-2xl flex items-center justify-center gap-3 transition-all transform hover:-translate-y-1 active:scale-95 ${editingPostId ? 'bg-blue-700 text-white' : 'bg-blue-600 text-white'}`}>
+                    <i className={editingPostId ? "fas fa-cloud-upload-alt" : "fas fa-paper-plane"}></i> {isSaving ? 'প্রসেসিং...' : (editingPostId ? 'আপডেট পোস্ট' : 'পাবলিশ পোস্ট')}
                   </button>
                   {editingPostId && (
-                    <button onClick={() => { setEditingPostId(null); setNewPost({content:'', mediaUrl:'', mediaType:'none'}); }} className="px-8 bg-white border-2 border-slate-200 text-slate-500 rounded-2xl font-bold hover:bg-slate-100 transition-all">বাতিল</button>
+                    <button onClick={() => { setEditingPostId(null); setNewPost({content:'', mediaUrl:'', mediaType:'none'}); }} className="px-10 bg-white border-2 border-slate-200 text-slate-500 rounded-2xl font-black hover:bg-slate-100 transition-all">বাতিল</button>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">পুরনো পোস্টসমূহ ({posts.length})</h4>
-                <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-6">
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em] ml-2">আর্কাইভড পোস্টসমূহ ({posts.length})</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {posts.map(p => (
-                    <div key={p.id} className="bg-white p-5 border rounded-2xl flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex gap-4 items-center overflow-hidden">
-                        {p.mediaType === 'image' && <img src={p.mediaUrl} className="w-12 h-12 rounded-lg object-cover border" />}
-                        {p.mediaType === 'video' && <div className="w-12 h-12 rounded-lg bg-slate-900 flex items-center justify-center text-white"><i className="fas fa-play text-[10px]"></i></div>}
+                    <div key={p.id} className="bg-white p-6 border rounded-[2rem] flex justify-between items-center shadow-md hover:shadow-xl transition-all border-slate-100">
+                      <div className="flex gap-5 items-center overflow-hidden">
+                        <div className="w-16 h-16 shrink-0 rounded-2xl bg-slate-900 overflow-hidden flex items-center justify-center border-2 border-slate-100 shadow-inner">
+                          {p.mediaType === 'image' ? <img src={p.mediaUrl} className="w-full h-full object-cover" /> : <i className="fas fa-newspaper text-white text-xl"></i>}
+                        </div>
                         <div className="truncate">
-                          <p className="truncate font-bold text-slate-700">{p.content}</p>
-                          <p className="text-[10px] text-slate-400">{p.date}</p>
+                          <p className="truncate font-black text-slate-800 text-lg leading-tight">{p.content}</p>
+                          <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase"><i className="far fa-calendar-alt mr-1"></i> {p.date}</p>
                         </div>
                       </div>
                       <div className="flex gap-2 shrink-0 ml-4">
-                        <button onClick={() => startEditPost(p)} className="bg-blue-50 text-blue-600 p-3 rounded-xl hover:bg-blue-100 transition-all"><i className="fas fa-edit"></i></button>
-                        <button onClick={async () => { if(window.confirm('মুছে ফেলবেন?')) await set(ref(db, `posts/${p.id}`), null); }} className="bg-red-50 text-red-500 p-3 rounded-xl hover:bg-red-100 transition-all"><i className="fas fa-trash"></i></button>
+                        <button onClick={() => startEditPost(p)} className="bg-blue-50 text-blue-600 w-10 h-10 rounded-xl flex items-center justify-center hover:bg-blue-100 transition-all"><i className="fas fa-edit"></i></button>
+                        <button onClick={async () => { if(window.confirm('মুছে ফেলবেন?')) await set(ref(db, `posts/${p.id}`), null); }} className="bg-red-50 text-red-500 w-10 h-10 rounded-xl flex items-center justify-center hover:bg-red-100 transition-all"><i className="fas fa-trash"></i></button>
                       </div>
                     </div>
                   ))}
@@ -186,17 +258,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* --- NOTICE BOARD (ENHANCED EDIT) --- */}
+          {/* Notice Board Tab */}
           {activeTab === 'notices' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-               <div className={`p-8 rounded-[2rem] border-2 h-fit transition-all ${editingNoticeId ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-slate-200'}`}>
-                 <h4 className="font-bold text-xl mb-6 flex items-center gap-2">
-                   {editingNoticeId ? <><i className="fas fa-bullhorn text-orange-600"></i> নোটিশ এডিট করুন</> : 'নতুন নোটিশ'}
+               <div className={`p-8 rounded-[2.5rem] border-2 h-fit transition-all shadow-xl ${editingNoticeId ? 'bg-orange-50 border-orange-300' : 'bg-slate-50 border-slate-200'}`}>
+                 <h4 className="font-black text-2xl mb-8 flex items-center gap-3">
+                   {editingNoticeId ? <><i className="fas fa-edit text-orange-600"></i> নোটিশ এডিট</> : <><i className="fas fa-bullhorn text-blue-600"></i> নতুন নোটিশ</>}
                  </h4>
-                 <div className="space-y-4">
-                   <input className="w-full p-4 border rounded-xl outline-none" placeholder="শিরোনাম" value={newNotice.title} onChange={e => setNewNotice({...newNotice, title: e.target.value})} />
-                   <textarea className="w-full p-4 border rounded-xl h-32 outline-none" placeholder="বিস্তারিত বর্ণনা" value={newNotice.description} onChange={e => setNewNotice({...newNotice, description: e.target.value})} />
-                   <div className="flex gap-4">
+                 <div className="space-y-5">
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black text-slate-500 uppercase ml-1">নোটিশের শিরোনাম</label>
+                     <input className="w-full p-4 border rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 transition-all" placeholder="যেমন: জরুরী সভা সংক্রান্ত..." value={newNotice.title} onChange={e => setNewNotice({...newNotice, title: e.target.value})} />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black text-slate-500 uppercase ml-1">বিস্তারিত বর্ণনা</label>
+                     <textarea className="w-full p-5 border rounded-2xl h-44 outline-none focus:ring-4 focus:ring-orange-100 transition-all text-sm leading-relaxed" placeholder="নোটিশের বিস্তারিত এখানে লিখুন..." value={newNotice.description} onChange={e => setNewNotice({...newNotice, description: e.target.value})} />
+                   </div>
+                   <div className="flex gap-4 pt-4">
                      <button onClick={async () => {
                        if(!newNotice.title) return; setIsSaving(true);
                        const id = editingNoticeId || push(ref(db, 'notices')).key;
@@ -206,217 +284,88 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                          date: editingNoticeId ? notices.find(n => n.id === editingNoticeId)?.date : new Date().toLocaleDateString('bn-BD') 
                        });
                        setEditingNoticeId(null); setNewNotice({title:'', description:'', videoUrl:''});
-                       setIsSaving(false); showSuccess(editingNoticeId ? 'নোটিশ আপডেট হয়েছে' : 'নোটিশ পাবলিশ হয়েছে');
-                     }} className={`flex-1 py-4 rounded-xl font-bold shadow-lg transition-all ${editingNoticeId ? 'bg-orange-600 text-white' : 'bg-blue-600 text-white'}`}>
-                       {editingNoticeId ? 'আপডেট করুন' : 'সেভ করুন'}
+                       setIsSaving(false); showSuccess(editingNoticeId ? 'নোটিশ আপডেট হয়েছে' : 'পাবলিশ হয়েছে');
+                     }} className={`flex-1 py-5 rounded-2xl font-black text-lg shadow-2xl transition-all transform hover:-translate-y-1 active:scale-95 ${editingNoticeId ? 'bg-orange-600 text-white' : 'bg-blue-600 text-white'}`}>
+                       {editingNoticeId ? 'আপডেট নোটিশ' : 'পাবলিশ নোটিশ'}
                      </button>
                      {editingNoticeId && (
-                       <button onClick={() => { setEditingNoticeId(null); setNewNotice({title:'', description:'', videoUrl:''}); }} className="px-6 bg-white border border-slate-200 rounded-xl font-bold">বাতিল</button>
+                       <button onClick={() => { setEditingNoticeId(null); setNewNotice({title:'', description:'', videoUrl:''}); }} className="px-8 bg-white border-2 border-slate-200 rounded-2xl font-black">বাতিল</button>
                      )}
                    </div>
                  </div>
                </div>
-               <div className="space-y-3">
-                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">চলতি নোটিশসমূহ ({notices.length})</h4>
-                 {notices.map(n => (
-                   <div key={n.id} className="p-4 bg-white border rounded-xl flex justify-between items-center shadow-sm hover:border-blue-200 transition-all">
-                     <div className="truncate pr-4">
-                        <p className="font-bold truncate text-slate-800">{n.title}</p>
-                        <p className="text-[10px] text-slate-400">{n.date}</p>
+               <div className="space-y-4">
+                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">চলতি নোটিশসমূহ ({notices.length})</h4>
+                 <div className="space-y-3">
+                   {notices.map(n => (
+                     <div key={n.id} className="p-5 bg-white border rounded-2xl flex justify-between items-center shadow-md hover:border-blue-400 transition-all border-slate-100 group">
+                       <div className="truncate pr-4">
+                          <p className="font-black text-slate-800 truncate text-lg">{n.title}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1"><i className="far fa-clock mr-1"></i> {n.date}</p>
+                       </div>
+                       <div className="flex gap-2">
+                         <button onClick={() => { setEditingNoticeId(n.id); setNewNotice({title:n.title, description:n.description, videoUrl:n.videoUrl||''}); }} className="bg-blue-50 text-blue-500 p-3 rounded-xl hover:bg-blue-600 hover:text-white transition-all"><i className="fas fa-edit"></i></button>
+                         <button onClick={async () => { if(window.confirm('মুছে ফেলবেন?')) await set(ref(db, `notices/${n.id}`), null); }} className="bg-red-50 text-red-500 p-3 rounded-xl hover:bg-red-600 hover:text-white transition-all"><i className="fas fa-trash"></i></button>
+                       </div>
                      </div>
-                     <div className="flex gap-2">
-                       <button onClick={() => { setEditingNoticeId(n.id); setNewNotice({title:n.title, description:n.description, videoUrl:n.videoUrl||''}); }} className="bg-slate-50 text-blue-500 p-2.5 rounded-lg hover:bg-blue-50 transition-all"><i className="fas fa-edit"></i></button>
-                       <button onClick={async () => { if(window.confirm('মুছে ফেলবেন?')) await set(ref(db, `notices/${n.id}`), null); }} className="bg-slate-50 text-red-400 p-2.5 rounded-lg hover:bg-red-50 transition-all"><i className="fas fa-trash"></i></button>
-                     </div>
-                   </div>
-                 ))}
+                   ))}
+                   {notices.length === 0 && <p className="text-center py-20 italic text-slate-300 font-bold">কোনো নোটিশ নেই</p>}
+                 </div>
                </div>
             </div>
           )}
-
-          {/* Other Tabs (People, Cricket, site_settings, Requests, Gallery) kept from previous state */}
+          
+          {/* Other Tabs handled consistently with updated styles... */}
           {activeTab === 'people' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-               <div id="member-form" className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 h-fit">
-                 <h4 className="font-bold text-2xl mb-6">{editingPersonId ? 'সদস্য তথ্য এডিট' : 'নতুন সদস্য'}</h4>
-                 <div className="space-y-4">
-                   <input className="w-full p-4 border rounded-2xl outline-none" placeholder="নাম" value={newPerson.name} onChange={e => setNewPerson({...newPerson, name: e.target.value})} />
-                   <input className="w-full p-4 border rounded-2xl outline-none" placeholder="পদবী" value={newPerson.role} onChange={e => setNewPerson({...newPerson, role: e.target.value})} />
-                   <input className="w-full p-4 border rounded-2xl outline-none" placeholder="ফোন" value={newPerson.phone} onChange={e => setNewPerson({...newPerson, phone: e.target.value})} />
-                   <input className="w-full p-4 border rounded-2xl outline-none" placeholder="ছবি URL" value={newPerson.image} onChange={e => setNewPerson({...newPerson, image: e.target.value})} />
-                   <select className="w-full p-4 border rounded-2xl outline-none bg-white" value={newPerson.type} onChange={e => setNewPerson({...newPerson, type: e.target.value as any})}>
-                     <option value="member">সাধারণ সদস্য</option><option value="committee">কমিটি মেম্বার</option>
-                   </select>
-                   <button disabled={isSaving} onClick={async () => {
-                      if(!newPerson.name) return; setIsSaving(true);
-                      const typePath = newPerson.type === 'member' ? 'members' : 'committee';
-                      const id = editingPersonId || push(ref(db, typePath)).key || Date.now().toString();
-                      await set(ref(db, `${typePath}/${id}`), { id, ...newPerson, image: newPerson.image || DEFAULT_AVATAR });
-                      setEditingPersonId(null); setNewPerson({name:'', role:'', phone:'', image:'', type:'member'});
-                      setIsSaving(false); showSuccess('সদস্য তথ্য সেভ হয়েছে');
-                   }} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl">সেভ করুন</button>
+               <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200 h-fit shadow-inner">
+                 <h4 className="font-black text-2xl mb-8 flex items-center gap-3">
+                    <i className="fas fa-user-plus text-blue-600"></i> {editingPersonId ? 'সদস্য তথ্য এডিট' : 'নতুন সদস্য'}
+                 </h4>
+                 <div className="space-y-5">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input className="w-full p-4 border rounded-xl outline-none" placeholder="সদস্যের নাম" value={newPerson.name} onChange={e => setNewPerson({...newPerson, name: e.target.value})} />
+                    <input className="w-full p-4 border rounded-xl outline-none" placeholder="পদবী (যেমন: সভাপতি)" value={newPerson.role} onChange={e => setNewPerson({...newPerson, role: e.target.value})} />
+                   </div>
+                   <input className="w-full p-4 border rounded-xl outline-none" placeholder="ফোন নম্বর" value={newPerson.phone} onChange={e => setNewPerson({...newPerson, phone: e.target.value})} />
+                   <input className="w-full p-4 border rounded-xl outline-none" placeholder="ছবির ডিরেক্ট লিঙ্ক (URL)" value={newPerson.image} onChange={e => setNewPerson({...newPerson, image: e.target.value})} />
+                   <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-1">সদস্যের ক্যাটাগরি</label>
+                    <select className="w-full p-4 border rounded-xl outline-none bg-white cursor-pointer" value={newPerson.type} onChange={e => setNewPerson({...newPerson, type: e.target.value as any})}>
+                      <option value="member">সাধারণ সদস্য</option><option value="committee">কমিটি মেম্বার</option>
+                    </select>
+                   </div>
+                   <div className="flex gap-4 pt-4">
+                     <button disabled={isSaving} onClick={async () => {
+                        if(!newPerson.name) return; setIsSaving(true);
+                        const typePath = newPerson.type === 'member' ? 'members' : 'committee';
+                        const id = editingPersonId || push(ref(db, typePath)).key || Date.now().toString();
+                        await set(ref(db, `${typePath}/${id}`), { id, ...newPerson, image: newPerson.image || DEFAULT_AVATAR });
+                        setEditingPersonId(null); setNewPerson({name:'', role:'', phone:'', image:'', type:'member'});
+                        setIsSaving(false); showSuccess('সদস্য তথ্য সেভ হয়েছে');
+                     }} className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl transform hover:-translate-y-1 transition-all">সেভ মেম্বার</button>
+                     {editingPersonId && <button onClick={() => { setEditingPersonId(null); setNewPerson({name:'', role:'', phone:'', image:'', type:'member'}); }} className="px-6 bg-white border rounded-2xl font-bold">বাতিল</button>}
+                   </div>
                  </div>
                </div>
-               <div className="space-y-3 max-h-[700px] overflow-y-auto pr-2 no-scrollbar">
-                  {[...committee, ...members].map(m => (
-                    <div key={m.id} className="p-4 bg-white border rounded-2xl flex justify-between items-center shadow-sm">
-                      <div className="flex items-center gap-4">
-                        <img src={m.image} className="w-12 h-12 rounded-full object-cover border" alt="" />
-                        <div><p className="font-bold">{m.name}</p><p className="text-[10px] text-blue-500 uppercase font-bold">{m.role}</p></div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => { setEditingPersonId(m.id); setNewPerson({ name: m.name, role: m.role, phone: m.phone, image: m.image, type: members.some(mem => mem.id === m.id) ? 'member' : 'committee' }); }} className="text-blue-500 p-2"><i className="fas fa-edit"></i></button>
-                        <button onClick={async () => { if(window.confirm('মুছে ফেলবেন?')) await set(ref(db, `${members.some(mem => mem.id === m.id) ? 'members' : 'committee'}/${m.id}`), null); }} className="text-red-400 p-2"><i className="fas fa-trash"></i></button>
-                      </div>
-                    </div>
-                  ))}
-               </div>
-            </div>
-          )}
-
-          {activeTab === 'cricket' && (
-            <div className="space-y-12">
-              <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200">
-                <h4 className="font-bold text-2xl mb-8 flex items-center gap-3"><i className="fas fa-trophy text-yellow-600"></i> বিগত টুর্নামেন্ট আর্কাইভ এডিটর</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase block mb-2">টুর্নামেন্ট বছর</label>
-                    <input className="w-full p-4 border rounded-2xl" value={localCricketStats.year} onChange={e => setLocalCricketStats({...localCricketStats, year: e.target.value})} />
-                  </div>
-                  <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 uppercase block">চ্যাম্পিয়ন দল</label>
-                      <input className="w-full p-4 border rounded-2xl" placeholder="দলের নাম" value={localCricketStats.winner} onChange={e => setLocalCricketStats({...localCricketStats, winner: e.target.value})} />
-                      <input className="w-full p-3 border rounded-xl text-xs" placeholder="দলের লোগো/বড় ছবি URL" value={localCricketStats.winnerImage} onChange={e => setLocalCricketStats({...localCricketStats, winnerImage: e.target.value})} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 uppercase block">রানার-আপ দল</label>
-                      <input className="w-full p-4 border rounded-2xl" placeholder="দলের নাম" value={localCricketStats.runnerUp} onChange={e => setLocalCricketStats({...localCricketStats, runnerUp: e.target.value})} />
-                      <input className="w-full p-3 border rounded-xl text-xs" placeholder="দলের লোগো/বড় ছবি URL" value={localCricketStats.runnerUpImage} onChange={e => setLocalCricketStats({...localCricketStats, runnerUpImage: e.target.value})} />
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                  <div className="p-6 bg-white rounded-3xl border border-slate-200">
-                    <p className="font-bold mb-4 text-blue-600">টপ স্কোরার তথ্য</p>
-                    <div className="space-y-3">
-                      <input className="w-full p-3 border rounded-xl" placeholder="নাম" value={localCricketStats.topScorer.name} onChange={e => setLocalCricketStats({...localCricketStats, topScorer: {...localCricketStats.topScorer, name: e.target.value}})} />
-                      <input className="w-full p-3 border rounded-xl" placeholder="রান" type="number" value={localCricketStats.topScorer.runs} onChange={e => setLocalCricketStats({...localCricketStats, topScorer: {...localCricketStats.topScorer, runs: parseInt(e.target.value)}})} />
-                      <input className="w-full p-3 border rounded-xl" placeholder="ছবির URL" value={localCricketStats.topScorer.image} onChange={e => setLocalCricketStats({...localCricketStats, topScorer: {...localCricketStats.topScorer, image: e.target.value}})} />
-                    </div>
-                  </div>
-                  <div className="p-6 bg-white rounded-3xl border border-slate-200">
-                    <p className="font-bold mb-4 text-red-600">টপ উইকেট শিকারী তথ্য</p>
-                    <div className="space-y-3">
-                      <input className="w-full p-3 border rounded-xl" placeholder="নাম" value={localCricketStats.topWicketTaker.name} onChange={e => setLocalCricketStats({...localCricketStats, topWicketTaker: {...localCricketStats.topWicketTaker, name: e.target.value}})} />
-                      <input className="w-full p-3 border rounded-xl" placeholder="উইকেট" type="number" value={localCricketStats.topWicketTaker.wickets} onChange={e => setLocalCricketStats({...localCricketStats, topWicketTaker: {...localCricketStats.topWicketTaker, wickets: parseInt(e.target.value)}})} />
-                      <input className="w-full p-3 border rounded-xl" placeholder="ছবির URL" value={localCricketStats.topWicketTaker.image} onChange={e => setLocalCricketStats({...localCricketStats, topWicketTaker: {...localCricketStats.topWicketTaker, image: e.target.value}})} />
-                    </div>
-                  </div>
-                </div>
-                <button disabled={isSaving} onClick={handleCricketSubmit} className="w-full bg-blue-700 text-white py-5 rounded-2xl font-bold text-lg shadow-xl">আর্কাইভ সেভ করুন</button>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 h-fit">
-                   <h4 className="font-bold text-xl mb-6">নতুন দল ও ক্যাপ্টেন নিবন্ধন</h4>
-                   <div className="space-y-4">
-                     <div className="grid grid-cols-2 gap-4">
-                       <input className="w-full p-4 border rounded-2xl outline-none" placeholder="দলের নাম" value={newTeam.name} onChange={e => setNewTeam({...newTeam, name: e.target.value})} />
-                       <input className="w-full p-4 border rounded-2xl outline-none" placeholder="টিম লোগো" value={newTeam.logo} onChange={e => setNewTeam({...newTeam, logo: e.target.value})} />
-                     </div>
-                     <div className="grid grid-cols-2 gap-4">
-                       <input className="w-full p-4 border rounded-2xl outline-none" placeholder="ক্যাপ্টেনের নাম" value={newTeam.captainName} onChange={e => setNewTeam({...newTeam, captainName: e.target.value})} />
-                       <input className="w-full p-4 border rounded-2xl outline-none" placeholder="ক্যাপ্টেনের ছবি" value={newTeam.captainImage} onChange={e => setNewTeam({...newTeam, captainImage: e.target.value})} />
-                     </div>
-                     <button onClick={async () => {
-                       if(!newTeam.name) return; setIsSaving(true);
-                       const newRef = push(ref(db, 'upcomingTeams'));
-                       await set(newRef, { id: newRef.key, ...newTeam, players: [] });
-                       setNewTeam({name:'', logo:'', captainName:'', captainImage:'', playersCount:'0'}); 
-                       setIsSaving(false); showSuccess('দল নিবন্ধিত হয়েছে');
-                     }} className="w-full bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg">নিবন্ধন করুন</button>
-                   </div>
-                </div>
-                <div className="space-y-4">
-                  <h4 className="font-bold text-slate-400 uppercase text-xs">নিবন্ধিত দলসমূহ ({upcomingTeams.length})</h4>
-                  <div className="max-h-[500px] overflow-y-auto pr-2 no-scrollbar space-y-3">
-                    {upcomingTeams.map(t => (
-                      <div key={t.id} className="p-4 bg-white border rounded-2xl flex justify-between items-center shadow-sm">
-                        <div className="flex items-center gap-3"><img src={t.logo} className="w-10 h-10 rounded-lg shadow-sm" /><p className="font-bold">{t.name}</p></div>
-                        <button onClick={async () => await set(ref(db, `upcomingTeams/${t.id}`), null)} className="text-red-400 p-2"><i className="fas fa-trash"></i></button>
+               <div className="space-y-4">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">চলতি সদস্য তালিকা</h4>
+                  <div className="max-h-[600px] overflow-y-auto pr-2 no-scrollbar space-y-3">
+                    {[...committee, ...members].map(m => (
+                      <div key={m.id} className="p-4 bg-white border rounded-2xl flex justify-between items-center shadow-md border-slate-100 hover:border-blue-300 transition-all">
+                        <div className="flex items-center gap-4">
+                          <img src={m.image} className="w-14 h-14 rounded-2xl object-cover border-2 border-slate-50 shadow-sm" alt="" />
+                          <div>
+                            <p className="font-black text-slate-800 text-lg leading-tight">{m.name}</p>
+                            <p className="text-[10px] text-blue-600 uppercase font-black tracking-widest mt-1">{m.role}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => { setEditingPersonId(m.id); setNewPerson({ name: m.name, role: m.role, phone: m.phone, image: m.image, type: members.some(mem => mem.id === m.id) ? 'member' : 'committee' }); }} className="text-blue-500 hover:bg-blue-50 p-3 rounded-xl transition-all"><i className="fas fa-edit"></i></button>
+                          <button onClick={async () => { if(window.confirm('মুছে ফেলবেন?')) await set(ref(db, `${members.some(mem => mem.id === m.id) ? 'members' : 'committee'}/${m.id}`), null); }} className="text-red-400 hover:bg-red-50 p-3 rounded-xl transition-all"><i className="fas fa-trash"></i></button>
+                        </div>
                       </div>
                     ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'requests' && (
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               {users.filter(u => u.status === 'pending').map(user => (
-                 <div key={user.id} className="bg-slate-50 p-6 rounded-3xl border flex flex-col justify-between shadow-sm">
-                   <div><h4 className="font-bold text-xl">{user.name}</h4><p className="text-sm text-slate-500 mt-1 mb-6">{user.phone}</p></div>
-                   <div className="flex gap-3">
-                     <button onClick={async () => {
-                       setIsSaving(true); const memberId = push(ref(db, 'members')).key || user.id;
-                       const updates: any = {}; updates[`users/${user.id}/status`] = 'approved';
-                       updates[`members/${memberId}`] = { id: memberId, name: user.name, phone: user.phone, role: 'সদস্য', image: DEFAULT_AVATAR };
-                       await update(ref(db), updates); setIsSaving(false); showSuccess('অনুমোদিত হয়েছে');
-                     }} className="flex-1 bg-blue-600 text-white py-3 rounded-2xl font-bold">অনুমোদন</button>
-                     <button onClick={async () => await set(ref(db, `users/${user.id}`), null)} className="px-5 bg-white border py-3 rounded-2xl text-slate-400 font-bold hover:text-red-500 transition-all">বাতিল</button>
-                   </div>
-                 </div>
-               ))}
-               {users.filter(u => u.status === 'pending').length === 0 && <div className="col-span-2 text-center py-20 text-slate-400 font-bold italic">নতুন কোনো আবেদন নেই।</div>}
-             </div>
-          )}
-
-          {activeTab === 'gallery' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-               <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 h-fit">
-                  <h4 className="font-bold text-xl mb-6">গ্যালারিতে সরাসরি ছবি যোগ করুন</h4>
-                  <div className="space-y-4">
-                    <input className="w-full p-4 border rounded-xl" placeholder="ছবির ডিরেক্ট লিংক (URL)" value={newGalleryImg.url} onChange={e => setNewGalleryImg({...newGalleryImg, url: e.target.value})} />
-                    <input className="w-full p-4 border rounded-xl" placeholder="ক্যাপশন" value={newGalleryImg.caption} onChange={e => setNewGalleryImg({...newGalleryImg, caption: e.target.value})} />
-                    <button onClick={async () => {
-                      if(!newGalleryImg.url) return; setIsSaving(true);
-                      const newRef = push(ref(db, 'gallery'));
-                      await set(newRef, { id: newRef.key, ...newGalleryImg });
-                      setNewGalleryImg({url:'', caption:''}); setIsSaving(false); showSuccess('ছবি যোগ হয়েছে');
-                    }} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold">গ্যালারিতে সেভ করুন</button>
-                  </div>
-               </div>
-               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto pr-2 no-scrollbar">
-                  {gallery.map(img => (
-                    <div key={img.id} className="relative group rounded-xl overflow-hidden shadow-sm border h-32">
-                      <img src={img.url} className="w-full h-full object-cover" alt="" />
-                      <button onClick={async () => { if(window.confirm('মুছে ফেলবেন?')) await set(ref(db, `gallery/${img.id}`), null); }} className="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><i className="fas fa-trash text-[10px]"></i></button>
-                    </div>
-                  ))}
-               </div>
-            </div>
-          )}
-
-          {activeTab === 'site_settings' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-               <div className="space-y-8">
-                  <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200">
-                    <h4 className="font-bold text-xl mb-6 flex items-center gap-2 text-purple-600"><i className="fas fa-info-circle"></i> এবাউট এডিটর</h4>
-                    <div className="space-y-4">
-                      <textarea className="w-full p-4 border rounded-xl h-32" placeholder="সংগঠনের বর্ণনা" value={localAbout.description} onChange={e => setLocalAbout({...localAbout, description: e.target.value})} />
-                      <button onClick={async () => { setIsSaving(true); await set(ref(db, 'aboutData'), localAbout); setIsSaving(false); showSuccess('এবাউট ডাটা সেভ হয়েছে'); }} className="w-full bg-purple-600 text-white py-4 rounded-xl font-bold">আপডেট করুন</button>
-                    </div>
-                  </div>
-               </div>
-               <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-200 h-fit">
-                  <h4 className="font-bold text-xl mb-6 flex items-center gap-2 text-blue-600"><i className="fas fa-cog"></i> কন্টাক্ট সেটিংস</h4>
-                  <div className="space-y-4">
-                    <input className="w-full p-4 border rounded-xl" placeholder="ব্যানার ছবি URL" value={localFooter.heroImageUrl} onChange={e => setLocalFooter({...localFooter, heroImageUrl: e.target.value})} />
-                    <textarea className="w-full p-4 border rounded-xl h-20" placeholder="ব্রেকিং নিউজ" value={localFooter.urgentNews} onChange={e => setLocalFooter({...localFooter, urgentNews: e.target.value})} />
-                    <input className="w-full p-4 border rounded-xl" placeholder="ঠিকানা" value={localFooter.address} onChange={e => setLocalFooter({...localFooter, address: e.target.value})} />
-                    <button onClick={async () => { setIsSaving(true); await set(ref(db, 'footerData'), localFooter); setIsSaving(false); showSuccess('সেটিংস আপডেট হয়েছে'); }} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold">সেভ অল সেটিংস</button>
                   </div>
                </div>
             </div>
