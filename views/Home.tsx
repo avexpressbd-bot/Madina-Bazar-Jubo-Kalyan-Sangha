@@ -83,7 +83,6 @@ const Home: React.FC<{
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            {/* Champion Team */}
             <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-[3rem] p-1 shadow-2xl overflow-hidden group">
                <div className="bg-white h-full w-full rounded-[2.9rem] p-8 flex flex-col md:flex-row items-center gap-6">
                   <div className="relative shrink-0">
@@ -95,14 +94,10 @@ const Home: React.FC<{
                   <div className="text-center md:text-left">
                     <p className="text-yellow-600 font-black text-xs uppercase tracking-[0.3em] mb-2">বিজয়ী দল</p>
                     <h3 className="text-4xl font-black text-slate-800 leading-tight">{cricketStats.winner}</h3>
-                    <div className="mt-4 flex gap-2">
-                      <span className="bg-yellow-100 text-yellow-700 px-4 py-1 rounded-full text-xs font-bold border border-yellow-200">চ্যাম্পিয়ন ট্রফি</span>
-                    </div>
                   </div>
                </div>
             </div>
 
-            {/* Runner Up Team */}
             <div className="bg-gradient-to-br from-slate-300 to-slate-500 rounded-[3rem] p-1 shadow-2xl overflow-hidden group">
                <div className="bg-white h-full w-full rounded-[2.9rem] p-8 flex flex-col md:flex-row items-center gap-6">
                   <div className="relative shrink-0">
@@ -114,20 +109,13 @@ const Home: React.FC<{
                   <div className="text-center md:text-left">
                     <p className="text-slate-500 font-black text-xs uppercase tracking-[0.3em] mb-2">রানার-আপ দল</p>
                     <h3 className="text-4xl font-black text-slate-800 leading-tight">{cricketStats.runnerUp}</h3>
-                    <div className="mt-4 flex gap-2">
-                      <span className="bg-slate-100 text-slate-700 px-4 py-1 rounded-full text-xs font-bold border border-slate-200">সম্মাননা মেডেল</span>
-                    </div>
                   </div>
                </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Top Scorer Card */}
             <div className="bg-blue-600 rounded-[2.5rem] p-8 text-white flex items-center justify-between shadow-xl relative overflow-hidden group">
-               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                 <i className="fas fa-bat-ball text-8xl"></i>
-               </div>
                <div className="flex items-center gap-6 relative z-10">
                  <img src={cricketStats.topScorer.image || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} className="w-24 h-24 rounded-2xl object-cover border-4 border-blue-400/50 shadow-lg" />
                  <div>
@@ -141,11 +129,7 @@ const Home: React.FC<{
                </div>
             </div>
 
-            {/* Top Wicket Taker Card */}
             <div className="bg-red-600 rounded-[2.5rem] p-8 text-white flex items-center justify-between shadow-xl relative overflow-hidden group">
-               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                 <i className="fas fa-baseball text-8xl"></i>
-               </div>
                <div className="flex items-center gap-6 relative z-10">
                  <img src={cricketStats.topWicketTaker.image || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'} className="w-24 h-24 rounded-2xl object-cover border-4 border-red-400/50 shadow-lg" />
                  <div>
@@ -162,8 +146,65 @@ const Home: React.FC<{
         </div>
       </section>
 
-      {/* Captains Panel */}
-      <section className="py-12 bg-slate-900 overflow-hidden">
+      {/* Main Content Feed */}
+      <section className="py-16 bg-slate-50">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex justify-between items-center mb-10">
+            <h2 className="text-2xl font-bold text-slate-800 flex items-center">
+              <i className="fas fa-rss mr-3 text-blue-600"></i> আপডেট ফিড
+            </h2>
+          </div>
+
+          <div className="space-y-10">
+            {posts.length === 0 ? (
+              <div className="bg-white p-20 rounded-3xl text-center shadow-sm border border-slate-100">
+                <i className="fas fa-stream text-5xl text-slate-200 mb-6"></i>
+                <p className="text-slate-500 text-lg">এখনও কোনো পোস্ট করা হয়নি।</p>
+              </div>
+            ) : (
+              posts.map((post) => (
+                <div key={post.id} className="bg-white rounded-3xl shadow-xl border border-slate-50 overflow-hidden transition-all hover:shadow-2xl">
+                  <div className="p-6 flex items-center border-b border-slate-50">
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl flex items-center justify-center text-white mr-4">
+                      <i className="fas fa-users text-xl"></i>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-lg">মদিনা বাজার যুব কল্যাণ সংঘ</h4>
+                      <p className="text-sm text-slate-400 font-medium">{post.date}</p>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-slate-800 text-lg whitespace-pre-wrap leading-relaxed">{post.content}</p>
+                  </div>
+                  {post.mediaUrl && (
+                    <div className="bg-slate-100 max-h-[600px] overflow-hidden flex items-center justify-center border-y border-slate-50">
+                      {post.mediaType === 'image' ? (
+                        <img src={post.mediaUrl} className="w-full object-contain" alt="Post media" />
+                      ) : post.mediaType === 'video' ? (
+                        <div className="aspect-video w-full">
+                           {post.mediaUrl.includes('youtube.com') || post.mediaUrl.includes('youtu.be') ? (
+                             <iframe className="w-full h-full" src={post.mediaUrl.replace('watch?v=', 'embed/')} allowFullScreen></iframe>
+                           ) : (
+                             <video src={post.mediaUrl} controls className="w-full h-full"></video>
+                           )}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                  <div className="px-6 py-4 flex justify-between items-center text-slate-400 font-bold text-sm">
+                    <button className="flex items-center hover:text-blue-600 transition-colors"><i className="far fa-thumbs-up mr-2 text-lg"></i> ভালো লেগেছে</button>
+                    <button className="flex items-center hover:text-blue-600 transition-colors"><i className="far fa-comment-dots mr-2 text-lg"></i> মন্তব্য</button>
+                    <button className="flex items-center hover:text-blue-600 transition-colors"><i className="fas fa-share-nodes mr-2 text-lg"></i> শেয়ার</button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Captains Panel - Moved to BOTTOM */}
+      <section className="py-16 bg-slate-900 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between mb-10 border-b border-slate-800 pb-4">
              <div>
@@ -194,76 +235,6 @@ const Home: React.FC<{
             ))}
             {upcomingTeams.length === 0 && (
               <p className="text-slate-500 italic py-4">এখনও কোনো দল নিবন্ধিত হয়নি।</p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Main Content Feed */}
-      <section className="py-16 bg-slate-50 min-h-screen">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex justify-between items-center mb-10">
-            <h2 className="text-2xl font-bold text-slate-800 flex items-center">
-              <i className="fas fa-rss mr-3 text-blue-600"></i> আপডেট ফিড
-            </h2>
-          </div>
-
-          <div className="space-y-10">
-            {posts.length === 0 ? (
-              <div className="bg-white p-20 rounded-3xl text-center shadow-sm border border-slate-100">
-                <i className="fas fa-stream text-5xl text-slate-200 mb-6"></i>
-                <p className="text-slate-500 text-lg">এখনও কোনো পোস্ট করা হয়নি।</p>
-              </div>
-            ) : (
-              posts.map((post) => (
-                <div key={post.id} className="bg-white rounded-3xl shadow-xl border border-slate-50 overflow-hidden transition-all hover:shadow-2xl">
-                  {/* Post Header */}
-                  <div className="p-6 flex items-center border-b border-slate-50">
-                    <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl flex items-center justify-center text-white mr-4 shadow-inner">
-                      <i className="fas fa-users text-xl"></i>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-lg">মদিনা বাজার যুব কল্যাণ সংঘ</h4>
-                      <p className="text-sm text-slate-400 font-medium">{post.date}</p>
-                    </div>
-                  </div>
-
-                  {/* Post Content */}
-                  <div className="p-6">
-                    <p className="text-slate-800 text-lg whitespace-pre-wrap leading-relaxed">{post.content}</p>
-                  </div>
-
-                  {/* Post Media */}
-                  {post.mediaUrl && (
-                    <div className="bg-slate-100 max-h-[600px] overflow-hidden flex items-center justify-center border-y border-slate-50">
-                      {post.mediaType === 'image' ? (
-                        <img src={post.mediaUrl} className="w-full object-contain" alt="Post media" />
-                      ) : post.mediaType === 'video' ? (
-                        <div className="aspect-video w-full">
-                           {post.mediaUrl.includes('youtube.com') || post.mediaUrl.includes('youtu.be') ? (
-                             <iframe className="w-full h-full" src={post.mediaUrl.replace('watch?v=', 'embed/')} allowFullScreen></iframe>
-                           ) : (
-                             <video src={post.mediaUrl} controls className="w-full h-full"></video>
-                           )}
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
-
-                  {/* Post Interaction */}
-                  <div className="px-6 py-4 flex justify-between items-center text-slate-400 font-bold text-sm">
-                    <button className="flex items-center hover:text-blue-600 transition-colors group">
-                      <i className="far fa-thumbs-up mr-2 text-lg group-hover:scale-125 transition-transform"></i> ভালো লেগেছে
-                    </button>
-                    <button className="flex items-center hover:text-blue-600 transition-colors group">
-                      <i className="far fa-comment-dots mr-2 text-lg"></i> মন্তব্য
-                    </button>
-                    <button className="flex items-center hover:text-blue-600 transition-colors group">
-                      <i className="fas fa-share-nodes mr-2 text-lg"></i> শেয়ার
-                    </button>
-                  </div>
-                </div>
-              ))
             )}
           </div>
         </div>

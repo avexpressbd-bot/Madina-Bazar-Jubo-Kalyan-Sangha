@@ -36,7 +36,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [newPost, setNewPost] = useState({ content: '', mediaUrl: '', mediaType: 'none' as any });
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [newNotice, setNewNotice] = useState({ title: '', description: '', videoUrl: '' });
-  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
   const [newGalleryImg, setNewGalleryImg] = useState({ url: '', caption: '' });
   const [localCricketStats, setLocalCricketStats] = useState<TournamentStats>(cricketStats);
   const [newTeam, setNewTeam] = useState({ name: '', logo: '', captainName: '', captainImage: '', playersCount: '0' });
@@ -127,8 +126,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <p><i className="fas fa-envelope mr-2 text-blue-500"></i> {user.email}</p>
                     </div>
                     <div className="flex gap-2 pt-4">
-                      <button onClick={() => handleApproveUser(user)} className="flex-1 bg-green-600 text-white py-2.5 rounded-xl font-black text-xs">অনুমোদন</button>
-                      <button onClick={async () => { if(window.confirm('বাতিল করবেন?')) await set(ref(db, `users/${user.id}`), null); }} className="px-4 bg-white text-red-500 border border-red-200 py-2.5 rounded-xl font-black text-xs">মুছে ফেলুন</button>
+                      <button onClick={() => handleApproveUser(user)} className="flex-1 bg-green-600 text-white py-2.5 rounded-xl font-black text-xs hover:bg-green-700">অনুমোদন</button>
+                      <button onClick={async () => { if(window.confirm('বাতিল করবেন?')) await set(ref(db, `users/${user.id}`), null); }} className="px-4 bg-white text-red-500 border border-red-200 py-2.5 rounded-xl font-black text-xs hover:bg-red-50">মুছে ফেলুন</button>
                     </div>
                   </div>
                 </div>
@@ -168,7 +167,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* Cricket Hub Tab */}
           {activeTab === 'cricket' && (
             <div className="space-y-12">
-               {/* Tournament Stats */}
                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
                   <h4 className="font-black text-2xl mb-8 flex items-center gap-3"><i className="fas fa-trophy text-yellow-500"></i> টুর্নামেন্ট আর্কাইভ এডিটর</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -206,12 +204,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <button onClick={async () => { setIsSaving(true); await set(ref(db, 'cricketStats'), localCricketStats); setIsSaving(false); showSuccess('টুর্নামেন্ট তথ্য আপডেট হয়েছে'); }} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl">সব পরিবর্তন সেভ করুন</button>
                </div>
 
-               {/* Teams Management */}
                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
                   <h4 className="font-black text-2xl mb-8 flex items-center gap-3"><i className="fas fa-users-viewfinder text-blue-600"></i> নিবন্ধিত দলসমূহ ম্যানেজমেন্ট</h4>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     <div className="space-y-4">
-                       <p className="font-bold text-slate-500 text-sm">নতুন দল যোগ করুন</p>
                        <input className="w-full p-4 border rounded-xl" placeholder="দলের নাম" value={newTeam.name} onChange={e => setNewTeam({...newTeam, name: e.target.value})} />
                        <input className="w-full p-4 border rounded-xl" placeholder="দলের লগো ইউআরএল" value={newTeam.logo} onChange={e => setNewTeam({...newTeam, logo: e.target.value})} />
                        <input className="w-full p-4 border rounded-xl" placeholder="ক্যাপ্টেনের নাম" value={newTeam.captainName} onChange={e => setNewTeam({...newTeam, captainName: e.target.value})} />
@@ -336,10 +332,55 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
                   <h4 className="font-black text-xl mb-6">ব্র্যান্ডিং ও কন্টাক্ট</h4>
                   <div className="space-y-4">
-                    <input className="w-full p-4 border rounded-xl" placeholder="লগো ইউআরএল" value={localFooter.logoUrl} onChange={e => setLocalFooter({...localFooter, logoUrl: e.target.value})} />
-                    <input className="w-full p-4 border rounded-xl" placeholder="ব্যানার ইউআরএল" value={localFooter.heroImageUrl} onChange={e => setLocalFooter({...localFooter, heroImageUrl: e.target.value})} />
-                    <textarea className="w-full p-4 border rounded-xl" placeholder="ব্রেকিং নিউজ" value={localFooter.urgentNews} onChange={e => setLocalFooter({...localFooter, urgentNews: e.target.value})} />
-                    <button onClick={async () => { await set(ref(db, 'footerData'), localFooter); showSuccess('সেটিংস সেভ হয়েছে'); }} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black">সেভ সেটিংস</button>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase">লগো ইউআরএল</label>
+                      <input className="w-full p-4 border rounded-xl" placeholder="লগো ইউআরএল" value={localFooter.logoUrl} onChange={e => setLocalFooter({...localFooter, logoUrl: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase">ব্যানার ইমেজ ইউআরএল</label>
+                      <input className="w-full p-4 border rounded-xl" placeholder="ব্যানার ইউআরএল" value={localFooter.heroImageUrl} onChange={e => setLocalFooter({...localFooter, heroImageUrl: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase">ব্রেকিং নিউজ টেক্সট</label>
+                      <textarea className="w-full p-4 border rounded-xl" placeholder="ব্রেকিং নিউজ" value={localFooter.urgentNews} onChange={e => setLocalFooter({...localFooter, urgentNews: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase">কন্টাক্ট ইমেইল</label>
+                      <input className="w-full p-4 border rounded-xl" placeholder="ইমেইল" value={localFooter.email} onChange={e => setLocalFooter({...localFooter, email: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase">কন্টাক্ট ফোন</label>
+                      <input className="w-full p-4 border rounded-xl" placeholder="ফোন" value={localFooter.phone} onChange={e => setLocalFooter({...localFooter, phone: e.target.value})} />
+                    </div>
+                    <button onClick={async () => { await set(ref(db, 'footerData'), localFooter); showSuccess('সেটিংস সেভ হয়েছে'); }} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black">সেভ ব্র্যান্ডিং সেটিংস</button>
+                  </div>
+               </div>
+               
+               {/* About Us Settings */}
+               <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
+                  <h4 className="font-black text-xl mb-6">সংগঠন ও এবাউট তথ্য</h4>
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase">সংগঠনের বিবরণ</label>
+                      <textarea className="w-full p-4 border rounded-xl h-24" value={localAbout.description} onChange={e => setLocalAbout({...localAbout, description: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase">লক্ষ্য (Mission)</label>
+                      <input className="w-full p-4 border rounded-xl" value={localAbout.mission} onChange={e => setLocalAbout({...localAbout, mission: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase">উদ্দেশ্য (Vision)</label>
+                      <input className="w-full p-4 border rounded-xl" value={localAbout.vision} onChange={e => setLocalAbout({...localAbout, vision: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase">সাফল্যের বছর (পরিসংখ্যান)</label>
+                      <input className="w-full p-4 border rounded-xl" placeholder="সাফল্যের বছর" value={localAbout.stats[0]?.count} onChange={e => {
+                        const newStats = [...localAbout.stats];
+                        newStats[0] = { ...newStats[0], count: e.target.value };
+                        setLocalAbout({ ...localAbout, stats: newStats });
+                      }} />
+                    </div>
+                    <button onClick={async () => { await set(ref(db, 'aboutData'), localAbout); showSuccess('এবাউট তথ্য সেভ হয়েছে'); }} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black">সেভ এবাউট তথ্য</button>
                   </div>
                </div>
             </div>
