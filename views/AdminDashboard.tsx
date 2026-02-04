@@ -31,12 +31,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setSaveStatus(null), 3000);
   };
 
-  // --- Local States ---
+  // --- Local States for Forms ---
   const [newPerson, setNewPerson] = useState({ name: '', role: '', phone: '', image: '', type: 'member' });
   const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
+  
   const [newPost, setNewPost] = useState({ content: '', mediaUrl: '', mediaType: 'none' as any });
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  
   const [newNotice, setNewNotice] = useState({ title: '', description: '', videoUrl: '' });
+  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
+  
   const [newGalleryImg, setNewGalleryImg] = useState({ url: '', caption: '' });
   const [localCricketStats, setLocalCricketStats] = useState<TournamentStats>(cricketStats);
   const [newTeam, setNewTeam] = useState({ name: '', logo: '', captainName: '', captainImage: '', playersCount: '0' });
@@ -51,6 +55,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (specialMatch) setLocalSpecialMatch(specialMatch);
   }, [cricketStats, footerData, aboutData, specialMatch]);
 
+  // Post Submit Handler (Create/Update)
   const handlePostSubmit = async () => {
     if(!newPost.content) return alert('পোস্টের লেখা লিখুন');
     setIsSaving(true);
@@ -59,12 +64,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const postData = {
         id,
         ...newPost,
-        date: editingPostId ? posts.find(p => p.id === editingPostId)?.date : new Date().toLocaleDateString('bn-BD'),
+        date: editingPostId ? (posts.find(p => p.id === editingPostId)?.date || new Date().toLocaleDateString('bn-BD')) : new Date().toLocaleDateString('bn-BD'),
         likes: posts.find(p => p.id === editingPostId)?.likes || 0
       };
       await set(ref(db, `posts/${id}`), postData);
-      setNewPost({content:'', mediaUrl:'', mediaType:'none'}); setEditingPostId(null);
+      setNewPost({content:'', mediaUrl:'', mediaType:'none'}); 
+      setEditingPostId(null);
       showSuccess(editingPostId ? 'পোস্ট আপডেট হয়েছে' : 'পাবলিশ হয়েছে');
+    } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
+  };
+
+  // Notice Submit Handler (Create/Update)
+  const handleNoticeSubmit = async () => {
+    if(!newNotice.title || !newNotice.description) return alert('শিরোনাম ও বিবরণ পূরণ করুন');
+    setIsSaving(true);
+    try {
+      const id = editingNoticeId || push(ref(db, 'notices')).key;
+      const noticeData = {
+        id,
+        ...newNotice,
+        date: editingNoticeId ? (notices.find(n => n.id === editingNoticeId)?.date || new Date().toLocaleDateString('bn-BD')) : new Date().toLocaleDateString('bn-BD'),
+      };
+      await set(ref(db, `notices/${id}`), noticeData);
+      setNewNotice({title:'', description:'', videoUrl:''});
+      setEditingNoticeId(null);
+      showSuccess(editingNoticeId ? 'নোটিশ আপডেট হয়েছে' : 'নোটিশ পাবলিশ হয়েছে');
     } catch (e: any) { alert(e.message); } finally { setIsSaving(false); }
   };
 
@@ -115,6 +139,170 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         <div className="p-8 lg:p-12 min-h-[600px]">
+          {/* Post Feed Tab */}
+          {activeTab === 'feed' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+               <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200 h-fit">
+                  <h4 className="font-black text-2xl mb-8 flex items-center gap-3">
+                    <i className="fas fa-edit text-blue-600"></i> {editingPostId ? 'পোস্ট আপডেট করুন' : 'নতুন পোস্ট করুন'}
+                  </h4>
+                  <div className="space-y-4">
+                    <textarea 
+                      className="w-full p-4 border rounded-xl h-32 outline-none focus:ring-2 focus:ring-blue-100" 
+                      placeholder="কি লিখছেন..." 
+                      value={newPost.content} 
+                      onChange={e => setNewPost({...newPost, content: e.target.value})} 
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                       <select 
+                         className="p-4 border rounded-xl bg-white text-sm font-bold"
+                         value={newPost.mediaType}
+                         onChange={e => setNewPost({...newPost, mediaType: e.target.value as any})}
+                       >
+                         <option value="none">মিডিয়া নেই</option>
+                         <option value="image">ছবি (Image)</option>
+                         <option value="video">ভিডিও (Video)</option>
+                       </select>
+                       <input 
+                         className="p-4 border rounded-xl text-sm" 
+                         placeholder="লিঙ্ক (URL)" 
+                         value={newPost.mediaUrl} 
+                         onChange={e => setNewPost({...newPost, mediaUrl: e.target.value})} 
+                       />
+                    </div>
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={handlePostSubmit} 
+                        className={`flex-1 ${editingPostId ? 'bg-orange-600' : 'bg-blue-600'} text-white py-4 rounded-xl font-black shadow-lg`}
+                      >
+                        {editingPostId ? 'আপডেট করুন' : 'পাবলিশ করুন'}
+                      </button>
+                      {editingPostId && (
+                        <button 
+                          onClick={() => { setEditingPostId(null); setNewPost({content:'', mediaUrl:'', mediaType:'none'}); }} 
+                          className="px-6 bg-slate-200 text-slate-600 rounded-xl font-bold"
+                        >
+                          বাতিল
+                        </button>
+                      )}
+                    </div>
+                  </div>
+               </div>
+               
+               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 no-scrollbar">
+                  <h5 className="font-black text-slate-400 uppercase text-xs tracking-widest mb-4">ইতিপূর্বের পোস্টসমূহ</h5>
+                  {posts.map(post => (
+                    <div key={post.id} className="bg-white p-5 border rounded-2xl shadow-sm hover:shadow-md transition-shadow group">
+                      <p className="text-slate-800 text-sm line-clamp-2 mb-4 font-medium">{post.content}</p>
+                      <div className="flex justify-between items-center border-t pt-3">
+                        <span className="text-[10px] text-slate-400 font-bold">{post.date}</span>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => {
+                              setEditingPostId(post.id);
+                              setNewPost({ content: post.content, mediaUrl: post.mediaUrl || '', mediaType: post.mediaType });
+                            }} 
+                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                          >
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button 
+                            onClick={async () => {
+                              if(window.confirm('পোস্টটি মুছে ফেলবেন?')) await set(ref(db, `posts/${post.id}`), null);
+                            }} 
+                            className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {posts.length === 0 && <p className="text-center py-10 text-slate-400 italic">এখনও কোনো পোস্ট নেই</p>}
+               </div>
+            </div>
+          )}
+
+          {/* Notices Tab */}
+          {activeTab === 'notices' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+               <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200 h-fit">
+                  <h4 className="font-black text-2xl mb-8 flex items-center gap-3">
+                    <i className="fas fa-bullhorn text-orange-600"></i> {editingNoticeId ? 'নোটিশ আপডেট' : 'নতুন নোটিশ'}
+                  </h4>
+                  <div className="space-y-4">
+                    <input 
+                      className="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-blue-100" 
+                      placeholder="নোটিশের শিরোনাম" 
+                      value={newNotice.title} 
+                      onChange={e => setNewNotice({...newNotice, title: e.target.value})} 
+                    />
+                    <textarea 
+                      className="w-full p-4 border rounded-xl h-32 outline-none focus:ring-2 focus:ring-blue-100" 
+                      placeholder="বিস্তারিত বিবরণ..." 
+                      value={newNotice.description} 
+                      onChange={e => setNewNotice({...newNotice, description: e.target.value})} 
+                    />
+                    <input 
+                      className="w-full p-4 border rounded-xl text-sm" 
+                      placeholder="ভিডিও লিঙ্ক (ঐচ্ছিক)" 
+                      value={newNotice.videoUrl} 
+                      onChange={e => setNewNotice({...newNotice, videoUrl: e.target.value})} 
+                    />
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={handleNoticeSubmit} 
+                        className={`flex-1 ${editingNoticeId ? 'bg-orange-600' : 'bg-blue-600'} text-white py-4 rounded-xl font-black shadow-lg`}
+                      >
+                        {editingNoticeId ? 'আপডেট নোটিশ' : 'নোটিশ পাবলিশ'}
+                      </button>
+                      {editingNoticeId && (
+                        <button 
+                          onClick={() => { setEditingNoticeId(null); setNewNotice({title:'', description:'', videoUrl:''}); }} 
+                          className="px-6 bg-slate-200 text-slate-600 rounded-xl font-bold"
+                        >
+                          বাতিল
+                        </button>
+                      )}
+                    </div>
+                  </div>
+               </div>
+               
+               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 no-scrollbar">
+                  <h5 className="font-black text-slate-400 uppercase text-xs tracking-widest mb-4">প্রকাশিত নোটিশসমূহ</h5>
+                  {notices.map(notice => (
+                    <div key={notice.id} className="bg-white p-5 border rounded-2xl shadow-sm hover:shadow-md transition-shadow group">
+                      <h6 className="font-bold text-slate-800 text-lg mb-1">{notice.title}</h6>
+                      <p className="text-slate-500 text-xs line-clamp-2 mb-4">{notice.description}</p>
+                      <div className="flex justify-between items-center border-t pt-3">
+                        <span className="text-[10px] text-blue-600 font-black uppercase">{notice.date}</span>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => {
+                              setEditingNoticeId(notice.id);
+                              setNewNotice({ title: notice.title, description: notice.description, videoUrl: notice.videoUrl || '' });
+                            }} 
+                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                          >
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button 
+                            onClick={async () => {
+                              if(window.confirm('নোটিশটি মুছে ফেলবেন?')) await set(ref(db, `notices/${notice.id}`), null);
+                            }} 
+                            className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {notices.length === 0 && <p className="text-center py-10 text-slate-400 italic">বর্তমানে কোনো নোটিশ নেই</p>}
+               </div>
+            </div>
+          )}
+
           {/* Cricket Hub Tab */}
           {activeTab === 'cricket' && (
             <div className="space-y-12">
