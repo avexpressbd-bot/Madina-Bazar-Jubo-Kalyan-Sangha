@@ -119,42 +119,52 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'cricket' && (
             <div className="space-y-12">
                {/* Special Match High Voltage Editor */}
-               <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl">
-                  <h4 className="font-black text-2xl mb-8 flex items-center gap-3"><i className="fas fa-bolt text-yellow-400"></i> হাইভোল্টেজ ম্যাচ এডিটর (সিনিয়র vs জুনিয়র)</h4>
+               <div className="bg-slate-900 text-white p-8 md:p-12 rounded-[3rem] border border-blue-500/20 shadow-2xl">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+                    <h4 className="font-black text-3xl flex items-center gap-3"><i className="fas fa-bolt text-yellow-400"></i> হাইভোল্টেজ ম্যাচ কন্ট্রোল</h4>
+                    <span className="bg-white/10 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10">Junior vs Senior Match</span>
+                  </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase">ম্যাচ শিরোনাম</label>
-                       <input className="w-full p-4 border border-white/10 rounded-xl bg-white/5" value={localSpecialMatch.title} onChange={e => setLocalSpecialMatch({...localSpecialMatch, title: e.target.value})} />
+                       <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">ম্যাচ টাইটেল (Title)</label>
+                       <input className="w-full p-4 border border-white/10 rounded-2xl bg-white/5 outline-none focus:ring-2 focus:ring-blue-500/50" value={localSpecialMatch.title} onChange={e => setLocalSpecialMatch({...localSpecialMatch, title: e.target.value})} />
                     </div>
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase">ম্যাচ তারিখ/স্ট্যাটাস</label>
-                       <input className="w-full p-4 border border-white/10 rounded-xl bg-white/5" value={localSpecialMatch.date} onChange={e => setLocalSpecialMatch({...localSpecialMatch, date: e.target.value})} />
+                       <label className="text-[10px] font-black text-yellow-400 uppercase tracking-widest ml-1">ম্যাচ তারিখ ও সময় (Status)</label>
+                       <input className="w-full p-4 border border-white/10 rounded-2xl bg-white/5 outline-none focus:ring-2 focus:ring-yellow-500/50" value={localSpecialMatch.date} onChange={e => setLocalSpecialMatch({...localSpecialMatch, date: e.target.value})} />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     {/* Team 1 Edit */}
-                    <div className="space-y-6">
-                       <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
-                          <label className="text-[10px] font-black text-blue-400 uppercase mb-2 block">টিম ১ নাম</label>
-                          <input className="w-full p-3 border border-white/10 rounded-xl bg-white/10 mb-6 font-bold" value={localSpecialMatch.team1Name} onChange={e => setLocalSpecialMatch({...localSpecialMatch, team1Name: e.target.value})} />
-                          
-                          <p className="text-xs font-black text-slate-500 uppercase mb-3">প্লেয়ার লিস্ট (১১ জন)</p>
-                          <div className="space-y-2">
-                            {localSpecialMatch.team1Players.map((p, i) => (
-                              <input key={i} className="w-full p-2 text-sm border border-white/5 rounded-lg bg-white/5" placeholder={`খেলোয়াড় ${i+1}`} value={p} onChange={e => {
-                                 const newList = [...localSpecialMatch.team1Players];
-                                 newList[i] = e.target.value;
-                                 setLocalSpecialMatch({...localSpecialMatch, team1Players: newList});
-                              }} />
+                    <div className="space-y-8 bg-white/5 p-8 rounded-[3rem] border border-white/5">
+                       <div>
+                          <label className="text-[10px] font-black text-blue-400 uppercase block mb-2 tracking-widest">দল ১ এর নাম (Team A)</label>
+                          <input className="w-full p-4 border border-white/10 rounded-2xl bg-white/10 font-black text-xl" value={localSpecialMatch.team1Name} onChange={e => setLocalSpecialMatch({...localSpecialMatch, team1Name: e.target.value})} />
+                       </div>
+                       
+                       <div>
+                          <p className="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i className="fas fa-users-line"></i> প্লেয়ার লিস্ট (১১ জন মূল)</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {Array(11).fill(0).map((_, i) => (
+                              <div key={i} className="flex items-center gap-2 bg-white/5 rounded-xl border border-white/5 p-1">
+                                <span className="w-6 h-6 flex items-center justify-center text-[10px] font-black opacity-30">{i+1}</span>
+                                <input className="flex-1 p-2 text-sm bg-transparent outline-none" placeholder={`খেলোয়াড় ${i+1}`} value={localSpecialMatch.team1Players[i] || ''} onChange={e => {
+                                   const newList = [...localSpecialMatch.team1Players];
+                                   newList[i] = e.target.value;
+                                   setLocalSpecialMatch({...localSpecialMatch, team1Players: newList});
+                                }} />
+                              </div>
                             ))}
                           </div>
+                       </div>
 
-                          <p className="text-xs font-black text-red-400 uppercase mt-6 mb-3">অতিরিক্ত প্লেয়ার (৩ জন)</p>
-                          <div className="space-y-2">
-                            {localSpecialMatch.team1Subs.map((p, i) => (
-                              <input key={i} className="w-full p-2 text-sm border border-white/5 rounded-lg bg-red-900/10" placeholder={`অতিরিক্ত ${i+1}`} value={p} onChange={e => {
+                       <div>
+                          <p className="text-xs font-black text-red-400 uppercase mb-4 tracking-widest flex items-center gap-2"><i className="fas fa-user-plus"></i> অতিরিক্ত প্লেয়ার (৩ জন)</p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {Array(3).fill(0).map((_, i) => (
+                              <input key={i} className="w-full p-3 text-sm border border-red-500/20 rounded-xl bg-red-900/10 outline-none focus:ring-2 focus:ring-red-500/50" placeholder={`অতিরিক্ত ${i+1}`} value={localSpecialMatch.team1Subs[i] || ''} onChange={e => {
                                  const newList = [...localSpecialMatch.team1Subs];
                                  newList[i] = e.target.value;
                                  setLocalSpecialMatch({...localSpecialMatch, team1Subs: newList});
@@ -165,26 +175,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
 
                     {/* Team 2 Edit */}
-                    <div className="space-y-6">
-                       <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
-                          <label className="text-[10px] font-black text-yellow-400 uppercase mb-2 block">টিম ২ নাম</label>
-                          <input className="w-full p-3 border border-white/10 rounded-xl bg-white/10 mb-6 font-bold" value={localSpecialMatch.team2Name} onChange={e => setLocalSpecialMatch({...localSpecialMatch, team2Name: e.target.value})} />
-                          
-                          <p className="text-xs font-black text-slate-500 uppercase mb-3">প্লেয়ার লিস্ট (১১ জন)</p>
-                          <div className="space-y-2">
-                            {localSpecialMatch.team2Players.map((p, i) => (
-                              <input key={i} className="w-full p-2 text-sm border border-white/5 rounded-lg bg-white/5" placeholder={`খেলোয়াড় ${i+1}`} value={p} onChange={e => {
-                                 const newList = [...localSpecialMatch.team2Players];
-                                 newList[i] = e.target.value;
-                                 setLocalSpecialMatch({...localSpecialMatch, team2Players: newList});
-                              }} />
+                    <div className="space-y-8 bg-white/5 p-8 rounded-[3rem] border border-white/5">
+                       <div>
+                          <label className="text-[10px] font-black text-yellow-400 uppercase block mb-2 tracking-widest">দল ২ এর নাম (Team B)</label>
+                          <input className="w-full p-4 border border-white/10 rounded-2xl bg-white/10 font-black text-xl" value={localSpecialMatch.team2Name} onChange={e => setLocalSpecialMatch({...localSpecialMatch, team2Name: e.target.value})} />
+                       </div>
+                       
+                       <div>
+                          <p className="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i className="fas fa-users-line"></i> প্লেয়ার লিস্ট (১১ জন মূল)</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {Array(11).fill(0).map((_, i) => (
+                              <div key={i} className="flex items-center gap-2 bg-white/5 rounded-xl border border-white/5 p-1">
+                                <span className="w-6 h-6 flex items-center justify-center text-[10px] font-black opacity-30">{i+1}</span>
+                                <input className="flex-1 p-2 text-sm bg-transparent outline-none" placeholder={`খেলোয়াড় ${i+1}`} value={localSpecialMatch.team2Players[i] || ''} onChange={e => {
+                                   const newList = [...localSpecialMatch.team2Players];
+                                   newList[i] = e.target.value;
+                                   setLocalSpecialMatch({...localSpecialMatch, team2Players: newList});
+                                }} />
+                              </div>
                             ))}
                           </div>
+                       </div>
 
-                          <p className="text-xs font-black text-red-400 uppercase mt-6 mb-3">অতিরিক্ত প্লেয়ার (৩ জন)</p>
-                          <div className="space-y-2">
-                            {localSpecialMatch.team2Subs.map((p, i) => (
-                              <input key={i} className="w-full p-2 text-sm border border-white/5 rounded-lg bg-red-900/10" placeholder={`অতিরিক্ত ${i+1}`} value={p} onChange={e => {
+                       <div>
+                          <p className="text-xs font-black text-red-400 uppercase mb-4 tracking-widest flex items-center gap-2"><i className="fas fa-user-plus"></i> অতিরিক্ত প্লেয়ার (৩ জন)</p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {Array(3).fill(0).map((_, i) => (
+                              <input key={i} className="w-full p-3 text-sm border border-red-500/20 rounded-xl bg-red-900/10 outline-none focus:ring-2 focus:ring-red-500/50" placeholder={`অতিরিক্ত ${i+1}`} value={localSpecialMatch.team2Subs[i] || ''} onChange={e => {
                                  const newList = [...localSpecialMatch.team2Subs];
                                  newList[i] = e.target.value;
                                  setLocalSpecialMatch({...localSpecialMatch, team2Subs: newList});
@@ -200,7 +217,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     await set(ref(db, 'specialMatch'), localSpecialMatch);
                     setIsSaving(false);
                     showSuccess('ম্যাচ তথ্য আপডেট হয়েছে');
-                  }} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xl mt-8 shadow-2xl hover:bg-blue-700 transition-all">ম্যাচ সেটিংস সেভ করুন</button>
+                  }} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-3xl font-black text-xl mt-12 shadow-[0_15px_40px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-3">
+                    <i className="fas fa-save"></i> ম্যাচ সেটিংস সেভ করুন
+                  </button>
                </div>
 
                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
@@ -334,6 +353,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
+          {/* People Tab */}
           {activeTab === 'people' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200 h-fit">
@@ -375,56 +395,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {activeTab === 'feed' && (
-            <div className="space-y-8">
-              <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200 shadow-inner">
-                <textarea className="w-full p-6 rounded-3xl mb-6 border-0 outline-none min-h-[160px] focus:ring-4 focus:ring-blue-100 shadow-inner text-lg" placeholder="পোস্টের লেখা লিখুন..." value={newPost.content} onChange={e => setNewPost({...newPost, content: e.target.value})} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                   <input className="w-full p-4 border rounded-xl" placeholder="মিডিয়া ইউআরএল" value={newPost.mediaUrl} onChange={e => setNewPost({...newPost, mediaUrl: e.target.value})} />
-                   <select className="w-full p-4 border rounded-xl bg-white" value={newPost.mediaType} onChange={e => setNewPost({...newPost, mediaType: e.target.value as any})}>
-                     <option value="none">শুধু টেক্সট</option><option value="image">ছবি</option><option value="video">ভিডিও (Youtube)</option>
-                   </select>
-                </div>
-                <button disabled={isSaving} onClick={handlePostSubmit} className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl">পোস্ট করুন</button>
-              </div>
-              <div className="space-y-4">
-                 {posts.map(p => (
-                   <div key={p.id} className="p-4 bg-white border rounded-2xl flex justify-between items-center shadow-md">
-                      <p className="font-bold text-slate-800 truncate pr-4">{p.content}</p>
-                      <button onClick={async () => { if(window.confirm('মুছে ফেলবেন?')) await set(ref(db, `posts/${p.id}`), null); }} className="text-red-400 p-2"><i className="fas fa-trash"></i></button>
-                   </div>
-                 ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'notices' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-               <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
-                 <h4 className="font-black text-xl mb-6">নতুন নোটিশ</h4>
-                 <div className="space-y-4">
-                   <input className="w-full p-4 border rounded-xl" placeholder="শিরোনাম" value={newNotice.title} onChange={e => setNewNotice({...newNotice, title: e.target.value})} />
-                   <textarea className="w-full p-4 border rounded-xl h-40" placeholder="বিস্তারিত" value={newNotice.description} onChange={e => setNewNotice({...newNotice, description: e.target.value})} />
-                   <button onClick={async () => {
-                     if(!newNotice.title) return;
-                     const id = push(ref(db, 'notices')).key;
-                     await set(ref(db, `notices/${id}`), { id, ...newNotice, date: new Date().toLocaleDateString('bn-BD') });
-                     setNewNotice({title:'', description:'', videoUrl:''});
-                     showSuccess('নোটিশ পাবলিশ হয়েছে');
-                   }} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black">পাবলিশ করুন</button>
-                 </div>
-               </div>
-               <div className="space-y-3">
-                 {notices.map(n => (
-                   <div key={n.id} className="p-4 bg-white border rounded-2xl flex justify-between items-center shadow-md">
-                      <p className="font-black text-slate-800">{n.title}</p>
-                      <button onClick={async () => { if(window.confirm('মুছে ফেলবেন?')) await set(ref(db, `notices/${n.id}`), null); }} className="text-red-400 p-2"><i className="fas fa-trash"></i></button>
-                   </div>
-                 ))}
-               </div>
-            </div>
-          )}
-
+          {/* Site Settings Tab */}
           {activeTab === 'site_settings' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">

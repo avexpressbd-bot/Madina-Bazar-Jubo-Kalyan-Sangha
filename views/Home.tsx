@@ -73,71 +73,90 @@ const Home: React.FC<{
         }
       `}</style>
 
-      {/* Special High-Voltage Match Panel */}
-      <section className="py-16 bg-gradient-to-b from-slate-900 to-blue-900 text-white overflow-hidden relative" aria-labelledby="special-match-heading">
+      {/* Special High-Voltage Match Panel (Junior vs Senior) */}
+      <section className="py-24 bg-[#0a0f1d] text-white overflow-hidden relative" aria-labelledby="special-match-heading">
         <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+        <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-blue-600/20 blur-[120px] rounded-full -z-0"></div>
+        <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-red-600/10 blur-[120px] rounded-full -z-0"></div>
+        
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="text-center mb-12">
-            <span className="bg-red-600 text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest animate-pulse">Coming Soon</span>
-            <h2 id="special-match-heading" className="text-4xl md:text-5xl font-black mt-4 mb-2 italic uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-white to-yellow-400">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-1.5 rounded-full text-xs font-black uppercase tracking-widest animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+              <i className="fas fa-satellite-dish"></i> Coming Soon
+            </div>
+            <h2 id="special-match-heading" className="text-5xl md:text-7xl font-black mt-8 mb-4 italic uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-white to-yellow-400 drop-shadow-2xl">
                {specialMatch.title}
             </h2>
-            <p className="text-blue-300 font-bold"><i className="far fa-calendar-alt mr-2"></i> তারিখ: {specialMatch.date}</p>
+            <div className="inline-block bg-white/5 backdrop-blur-xl border border-white/10 px-10 py-3 rounded-[2rem] shadow-2xl">
+              <p className="text-2xl font-black text-blue-200 tracking-wide">
+                <i className="far fa-calendar-check mr-3 text-yellow-400"></i> {specialMatch.date}
+              </p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-            {/* Team 1 */}
-            <div className="bg-white/5 backdrop-blur-md p-8 rounded-[3rem] border border-white/10 shadow-2xl">
-               <div className="flex items-center justify-between mb-8 border-b border-white/10 pb-4">
-                  <h3 className="text-3xl font-black text-blue-400">{specialMatch.team1Name}</h3>
-                  <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Team A</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
+            {/* Team 1 Card */}
+            <div className="bg-gradient-to-b from-blue-900/40 to-black/60 backdrop-blur-2xl p-8 md:p-12 rounded-[4rem] border border-blue-500/30 shadow-[0_0_80px_rgba(59,130,246,0.15)] relative group hover:scale-[1.01] transition-transform">
+               <div className="absolute -top-6 -left-6 w-24 h-24 bg-blue-600/20 rounded-full blur-2xl group-hover:bg-blue-600/40 transition-all"></div>
+               <div className="flex items-center justify-between mb-10 border-b border-blue-500/20 pb-6">
+                  <h3 className="text-4xl font-black text-blue-400 tracking-tighter uppercase">{specialMatch.team1Name}</h3>
+                  <div className="bg-blue-600/30 px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-blue-300 border border-blue-400/30">Squad A</div>
                </div>
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6">
-                  {specialMatch.team1Players.map((player, idx) => (
-                    <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
-                       <span className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-[10px] font-bold">{idx + 1}</span>
-                       <span className="font-bold text-slate-200">{player}</span>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {specialMatch.team1Players.slice(0, 11).map((player, idx) => (
+                    <div key={idx} className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 hover:bg-blue-600/10 hover:border-blue-500/20 transition-all group/item">
+                       <span className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-sm font-black shadow-lg group-hover/item:scale-110 transition-transform">{idx + 1}</span>
+                       <span className="font-bold text-lg text-slate-200">{player || '-'}</span>
                     </div>
                   ))}
                </div>
-               <div className="mt-8 pt-6 border-t border-white/10">
-                  <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-4">অতিরিক্ত খেলোয়াড় (Subs)</p>
-                  <div className="flex flex-wrap gap-3">
-                    {specialMatch.team1Subs.map((player, idx) => (
-                      <span key={idx} className="bg-white/10 px-4 py-2 rounded-lg text-sm font-bold border border-white/5">{player}</span>
+               <div className="mt-12 pt-8 border-t border-white/10">
+                  <p className="text-xs font-black uppercase tracking-widest text-blue-400 mb-6 flex items-center gap-2">
+                    <i className="fas fa-plus-circle"></i> অতিরিক্ত খেলোয়াড় (Extra Players)
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {specialMatch.team1Subs.slice(0, 3).map((player, idx) => (
+                      <div key={idx} className="bg-white/5 px-6 py-3 rounded-2xl font-bold border border-white/10 text-slate-300 hover:text-white transition-colors">
+                        {player || '-'}
+                      </div>
                     ))}
                   </div>
                </div>
             </div>
 
-            {/* Team 2 */}
-            <div className="bg-white/5 backdrop-blur-md p-8 rounded-[3rem] border border-white/10 shadow-2xl">
-               <div className="flex items-center justify-between mb-8 border-b border-white/10 pb-4">
-                  <h3 className="text-3xl font-black text-yellow-400">{specialMatch.team2Name}</h3>
-                  <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Team B</span>
+            {/* Team 2 Card */}
+            <div className="bg-gradient-to-b from-yellow-900/20 to-black/60 backdrop-blur-2xl p-8 md:p-12 rounded-[4rem] border border-yellow-500/30 shadow-[0_0_80px_rgba(234,179,8,0.1)] relative group hover:scale-[1.01] transition-transform">
+               <div className="absolute -top-6 -right-6 w-24 h-24 bg-yellow-600/10 rounded-full blur-2xl group-hover:bg-yellow-600/30 transition-all"></div>
+               <div className="flex items-center justify-between mb-10 border-b border-yellow-500/20 pb-6">
+                  <h3 className="text-4xl font-black text-yellow-500 tracking-tighter uppercase">{specialMatch.team2Name}</h3>
+                  <div className="bg-yellow-600/20 px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-yellow-300 border border-yellow-500/30">Squad B</div>
                </div>
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6">
-                  {specialMatch.team2Players.map((player, idx) => (
-                    <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
-                       <span className="w-6 h-6 bg-yellow-600 rounded-full flex items-center justify-center text-[10px] font-bold">{idx + 1}</span>
-                       <span className="font-bold text-slate-200">{player}</span>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {specialMatch.team2Players.slice(0, 11).map((player, idx) => (
+                    <div key={idx} className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 hover:bg-yellow-600/10 hover:border-yellow-500/20 transition-all group/item">
+                       <span className="w-10 h-10 bg-yellow-600 rounded-xl flex items-center justify-center text-sm font-black shadow-lg text-black group-hover/item:scale-110 transition-transform">{idx + 1}</span>
+                       <span className="font-bold text-lg text-slate-200">{player || '-'}</span>
                     </div>
                   ))}
                </div>
-               <div className="mt-8 pt-6 border-t border-white/10">
-                  <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-4">অতিরিক্ত খেলোয়াড় (Subs)</p>
-                  <div className="flex flex-wrap gap-3">
-                    {specialMatch.team2Subs.map((player, idx) => (
-                      <span key={idx} className="bg-white/10 px-4 py-2 rounded-lg text-sm font-bold border border-white/5">{player}</span>
+               <div className="mt-12 pt-8 border-t border-white/10">
+                  <p className="text-xs font-black uppercase tracking-widest text-yellow-500 mb-6 flex items-center gap-2">
+                    <i className="fas fa-plus-circle"></i> অতিরিক্ত খেলোয়াড় (Extra Players)
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {specialMatch.team2Subs.slice(0, 3).map((player, idx) => (
+                      <div key={idx} className="bg-white/5 px-6 py-3 rounded-2xl font-bold border border-white/10 text-slate-300 hover:text-white transition-colors">
+                        {player || '-'}
+                      </div>
                     ))}
                   </div>
                </div>
             </div>
           </div>
           
-          <div className="mt-16 text-center">
-             <div className="inline-flex items-center gap-4 bg-red-600 text-white px-8 py-4 rounded-full font-black text-xl shadow-2xl transform hover:scale-105 transition-all cursor-default">
-                VS <span className="w-px h-6 bg-white/30"></span> হাইভোল্টেজ ম্যাচ
+          <div className="mt-24 text-center">
+             <div className="inline-flex items-center gap-8 bg-gradient-to-r from-red-600 to-red-700 text-white px-16 py-6 rounded-full font-black text-3xl shadow-[0_20px_60px_rgba(220,38,38,0.4)] transform hover:scale-110 transition-all duration-500 cursor-default border-b-8 border-red-900 active:translate-y-2 uppercase italic tracking-tighter">
+                Big Battle <span className="w-px h-10 bg-white/30"></span> High Voltage
              </div>
           </div>
         </div>
