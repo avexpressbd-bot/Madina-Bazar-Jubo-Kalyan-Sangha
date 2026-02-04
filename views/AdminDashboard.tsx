@@ -169,21 +169,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="space-y-12">
                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
                   <h4 className="font-black text-2xl mb-8 flex items-center gap-3"><i className="fas fa-trophy text-yellow-500"></i> টুর্নামেন্ট আর্কাইভ এডিটর</h4>
+                  
+                  {/* Tournament Main Info */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="space-y-2">
                        <label className="text-[10px] font-black text-slate-400 uppercase">টুর্নামেন্ট বছর</label>
                        <input className="w-full p-4 border rounded-xl" value={localCricketStats.year} onChange={e => setLocalCricketStats({...localCricketStats, year: e.target.value})} />
                     </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase">বিজয়ী দল</label>
-                       <input className="w-full p-4 border rounded-xl" value={localCricketStats.winner} onChange={e => setLocalCricketStats({...localCricketStats, winner: e.target.value})} />
+                  </div>
+
+                  {/* Winner and Runner-Up Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 pb-8 border-b">
+                    {/* Winner Section */}
+                    <div className="space-y-4 bg-yellow-50/50 p-6 rounded-3xl border border-yellow-100">
+                       <p className="font-black text-yellow-600 uppercase text-xs tracking-widest flex items-center gap-2">
+                          <i className="fas fa-crown"></i> বিজয়ী দল (Winner)
+                       </p>
+                       <div className="space-y-3">
+                          <input className="w-full p-4 border rounded-xl bg-white" placeholder="বিজয়ী দলের নাম" value={localCricketStats.winner} onChange={e => setLocalCricketStats({...localCricketStats, winner: e.target.value})} />
+                          <input className="w-full p-4 border rounded-xl bg-white" placeholder="বিজয়ী দলের লগো (URL)" value={localCricketStats.winnerImage} onChange={e => setLocalCricketStats({...localCricketStats, winnerImage: e.target.value})} />
+                       </div>
                     </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase">বিজয়ী দলের লগো (URL)</label>
-                       <input className="w-full p-4 border rounded-xl" value={localCricketStats.winnerImage} onChange={e => setLocalCricketStats({...localCricketStats, winnerImage: e.target.value})} />
+
+                    {/* Runner Up Section */}
+                    <div className="space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-200">
+                       <p className="font-black text-slate-500 uppercase text-xs tracking-widest flex items-center gap-2">
+                          <i className="fas fa-medal"></i> রানার্স-আপ দল (Runner Up)
+                       </p>
+                       <div className="space-y-3">
+                          <input className="w-full p-4 border rounded-xl bg-white" placeholder="রানার্স-আপ দলের নাম" value={localCricketStats.runnerUp} onChange={e => setLocalCricketStats({...localCricketStats, runnerUp: e.target.value})} />
+                          <input className="w-full p-4 border rounded-xl bg-white" placeholder="রানার্স-আপ দলের লগো (URL)" value={localCricketStats.runnerUpImage} onChange={e => setLocalCricketStats({...localCricketStats, runnerUpImage: e.target.value})} />
+                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 border-t pt-8">
+
+                  {/* Player Stats */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                      <div className="space-y-6">
                         <p className="font-black text-blue-600 uppercase text-xs tracking-widest">সেরা ব্যাটার তথ্য</p>
                         <input className="w-full p-4 border rounded-xl" placeholder="নাম" value={localCricketStats.topScorer.name} onChange={e => setLocalCricketStats({...localCricketStats, topScorer: {...localCricketStats.topScorer, name: e.target.value}})} />
@@ -204,6 +225,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <button onClick={async () => { setIsSaving(true); await set(ref(db, 'cricketStats'), localCricketStats); setIsSaving(false); showSuccess('টুর্নামেন্ট তথ্য আপডেট হয়েছে'); }} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl">সব পরিবর্তন সেভ করুন</button>
                </div>
 
+               {/* Teams Management */}
                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
                   <h4 className="font-black text-2xl mb-8 flex items-center gap-3"><i className="fas fa-users-viewfinder text-blue-600"></i> নিবন্ধিত দলসমূহ ম্যানেজমেন্ট</h4>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
