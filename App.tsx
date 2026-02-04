@@ -13,7 +13,7 @@ import CricketHub from './views/CricketHub';
 import Auth from './views/Auth';
 import AdminDashboard from './views/AdminDashboard';
 import { db, ref, onValue } from './firebase';
-import { View, Member, Notice, TournamentStats, Team, GalleryImage, User, Post, FooterData, AboutData } from './types';
+import { View, Member, Notice, TournamentStats, Team, GalleryImage, User, Post, FooterData, AboutData, SpecialMatch } from './types';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(() => {
@@ -34,6 +34,18 @@ const App: React.FC = () => {
   const [gallery, setGallery] = useState<GalleryImage[]>([]);
   const [upcomingTeams, setUpcomingTeams] = useState<Team[]>([]);
   
+  const [specialMatch, setSpecialMatch] = useState<SpecialMatch>({
+    title: 'জুনিয়র বনাম সিনিয়র হাইভোল্টেজ ম্যাচ',
+    date: 'কামিং সুন',
+    team1Name: 'সিনিয়র একাদশ',
+    team1Players: Array(11).fill('-'),
+    team1Subs: Array(3).fill('-'),
+    team2Name: 'জুনিয়র একাদশ',
+    team2Players: Array(11).fill('-'),
+    team2Subs: Array(3).fill('-'),
+    status: 'coming_soon'
+  });
+
   const [footerData, setFooterData] = useState<FooterData>({
     logoUrl: '',
     heroImageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=2000',
@@ -81,12 +93,13 @@ const App: React.FC = () => {
       footerData: 'footerData',
       aboutData: 'aboutData',
       cricketStats: 'cricketStats',
+      specialMatch: 'specialMatch'
     };
 
     const unsubscribers = Object.entries(dataPaths).map(([key, path]) => {
       return onValue(ref(db, path), (snapshot) => {
         const data = snapshot.val();
-        const isCollection = !['footerData', 'aboutData', 'cricketStats'].includes(key);
+        const isCollection = !['footerData', 'aboutData', 'cricketStats', 'specialMatch'].includes(key);
 
         if (!data) {
           if (isCollection) {
@@ -116,6 +129,7 @@ const App: React.FC = () => {
           case 'footerData': setFooterData(formatted as FooterData); break;
           case 'aboutData': setAboutData(formatted as AboutData); break;
           case 'cricketStats': setCricketStats(formatted as TournamentStats); break;
+          case 'specialMatch': setSpecialMatch(formatted as SpecialMatch); break;
         }
       });
     });
@@ -131,11 +145,10 @@ const App: React.FC = () => {
   };
 
   const renderView = () => {
-    // Corrected padding-top logic in the main app to accommodate the double-height navbar
-    const ptClass = "pt-[104px]"; // 40px top bar + 64px main nav
+    const ptClass = "pt-[104px]";
 
     switch (currentView) {
-      case 'home': return <div className={ptClass}><Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} upcomingTeams={upcomingTeams} /></div>;
+      case 'home': return <div className={ptClass}><Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} upcomingTeams={upcomingTeams} specialMatch={specialMatch} /></div>;
       case 'about': return <div className={ptClass}><About data={aboutData} /></div>;
       case 'members': return <div className={ptClass}><Members members={members} /></div>;
       case 'committee': return <div className={ptClass}><Committee members={committee} /></div>;
@@ -152,9 +165,9 @@ const App: React.FC = () => {
         return <div className={ptClass}><AdminDashboard 
           members={members} committee={committee} notices={notices} gallery={gallery}
           upcomingTeams={upcomingTeams} cricketStats={cricketStats} users={users} posts={posts}
-          footerData={footerData} aboutData={aboutData}
+          footerData={footerData} aboutData={aboutData} specialMatch={specialMatch}
         /></div>;
-      default: return <div className={ptClass}><Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} upcomingTeams={upcomingTeams} /></div>;
+      default: return <div className={ptClass}><Home setView={setCurrentView} posts={posts} heroImageUrl={footerData.heroImageUrl} urgentNews={footerData.urgentNews} cricketStats={cricketStats} upcomingTeams={upcomingTeams} specialMatch={specialMatch} /></div>;
     }
   };
 

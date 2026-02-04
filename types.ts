@@ -35,6 +35,18 @@ export interface Post {
   likes: number;
 }
 
+export interface SpecialMatch {
+  title: string;
+  date: string;
+  team1Name: string;
+  team1Players: string[];
+  team1Subs: string[];
+  team2Name: string;
+  team2Players: string[];
+  team2Subs: string[];
+  status: 'coming_soon' | 'live' | 'finished';
+}
+
 export interface AboutData {
   description: string;
   mission: string;

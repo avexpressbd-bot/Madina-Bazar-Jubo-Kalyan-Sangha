@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, Post, TournamentStats, Team } from '../types';
+import { View, Post, TournamentStats, Team, SpecialMatch } from '../types';
 
 const Home: React.FC<{ 
   setView: (view: View) => void; 
@@ -9,7 +9,8 @@ const Home: React.FC<{
   urgentNews: string;
   cricketStats: TournamentStats;
   upcomingTeams: Team[];
-}> = ({ setView, posts, heroImageUrl, urgentNews, cricketStats, upcomingTeams }) => {
+  specialMatch: SpecialMatch;
+}> = ({ setView, posts, heroImageUrl, urgentNews, cricketStats, upcomingTeams, specialMatch }) => {
   const newsText = urgentNews || "স্বাগতম! মদিনা বাজার যুব কল্যাণ সংঘের ওয়েবসাইটে আপনাকে স্বাগতম।";
 
   return (
@@ -71,6 +72,76 @@ const Home: React.FC<{
           animation-play-state: paused;
         }
       `}</style>
+
+      {/* Special High-Voltage Match Panel */}
+      <section className="py-16 bg-gradient-to-b from-slate-900 to-blue-900 text-white overflow-hidden relative">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="text-center mb-12">
+            <span className="bg-red-600 text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest animate-pulse">Coming Soon</span>
+            <h2 className="text-4xl md:text-5xl font-black mt-4 mb-2 italic uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-white to-yellow-400">
+               {specialMatch.title}
+            </h2>
+            <p className="text-blue-300 font-bold"><i className="far fa-calendar-alt mr-2"></i> তারিখ: {specialMatch.date}</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            {/* Team 1 */}
+            <div className="bg-white/5 backdrop-blur-md p-8 rounded-[3rem] border border-white/10 shadow-2xl">
+               <div className="flex items-center justify-between mb-8 border-b border-white/10 pb-4">
+                  <h3 className="text-3xl font-black text-blue-400">{specialMatch.team1Name}</h3>
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Team A</span>
+               </div>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6">
+                  {specialMatch.team1Players.map((player, idx) => (
+                    <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                       <span className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-[10px] font-bold">{idx + 1}</span>
+                       <span className="font-bold text-slate-200">{player}</span>
+                    </div>
+                  ))}
+               </div>
+               <div className="mt-8 pt-6 border-t border-white/10">
+                  <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-4">অতিরিক্ত খেলোয়াড় (Subs)</p>
+                  <div className="flex flex-wrap gap-3">
+                    {specialMatch.team1Subs.map((player, idx) => (
+                      <span key={idx} className="bg-white/10 px-4 py-2 rounded-lg text-sm font-bold border border-white/5">{player}</span>
+                    ))}
+                  </div>
+               </div>
+            </div>
+
+            {/* Team 2 */}
+            <div className="bg-white/5 backdrop-blur-md p-8 rounded-[3rem] border border-white/10 shadow-2xl">
+               <div className="flex items-center justify-between mb-8 border-b border-white/10 pb-4">
+                  <h3 className="text-3xl font-black text-yellow-400">{specialMatch.team2Name}</h3>
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Team B</span>
+               </div>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6">
+                  {specialMatch.team2Players.map((player, idx) => (
+                    <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                       <span className="w-6 h-6 bg-yellow-600 rounded-full flex items-center justify-center text-[10px] font-bold">{idx + 1}</span>
+                       <span className="font-bold text-slate-200">{player}</span>
+                    </div>
+                  ))}
+               </div>
+               <div className="mt-8 pt-6 border-t border-white/10">
+                  <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-4">অতিরিক্ত খেলোয়াড় (Subs)</p>
+                  <div className="flex flex-wrap gap-3">
+                    {specialMatch.team2Subs.map((player, idx) => (
+                      <span key={idx} className="bg-white/10 px-4 py-2 rounded-lg text-sm font-bold border border-white/5">{player}</span>
+                    ))}
+                  </div>
+               </div>
+            </div>
+          </div>
+          
+          <div className="mt-16 text-center">
+             <div className="inline-flex items-center gap-4 bg-red-600 text-white px-8 py-4 rounded-full font-black text-xl shadow-2xl transform hover:scale-105 transition-all cursor-default">
+                VS <span className="w-px h-6 bg-white/30"></span> হাইভোল্টেজ ম্যাচ
+             </div>
+          </div>
+        </div>
+      </section>
 
       {/* Tournament Highlights Section */}
       <section className="py-16 bg-white overflow-hidden">
@@ -203,7 +274,7 @@ const Home: React.FC<{
         </div>
       </section>
 
-      {/* Captains Panel - Moved to BOTTOM */}
+      {/* Captains Panel */}
       <section className="py-16 bg-slate-900 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between mb-10 border-b border-slate-800 pb-4">
